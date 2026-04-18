@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - {{ config.title }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}?v={{ version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ version }}">
+    <script>
+    var t = localStorage.getItem('memi-theme') || '{{ config.default_theme }}';
+    document.documentElement.dataset.theme = t;
+    </script>
+</head>
+<body>
+    <div class="theme-picker">
+        <span class="theme-label">theme</span>
+        {% for theme in config.themes %}
+        <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick="setTheme('{{ theme }}')"></div>
+        {% endfor %}
+    </div>
+    <h1><a href="/">{{ config.title }}</a></h1>
+
+    <div class="content">
+        {% if config.about_html %}
+        {{ config.about_html | safe }}
+        {% else %}
+        <p>Pick a category, look at the image, and try to guess what it is before revealing the answer.</p>
+        <p>No accounts, no scores, no pressure. Just you and your memory.</p>
+        {% endif %}
+
+        <p><a href="/" class="back-link">&larr; back to playing</a></p>
+    </div>
+    <script>
+    function setTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('memi-theme', theme);
+        document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === theme));
+    }
+    setTheme(localStorage.getItem('memi-theme') || '{{ config.default_theme }}');
+    </script>
+</body>
+</html>

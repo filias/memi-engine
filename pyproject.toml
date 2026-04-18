@@ -1,0 +1,51 @@
+[project]
+name = "memi-engine"
+version = "0.1.0"
+description = "Engine for building memi memory card game instances"
+license = "MIT"
+authors = [{ name = "Filipa Andrade", email = "filipa.andrade@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["memi", "memory", "game", "education"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+dependencies = [
+    "flask>=3.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+server = ["gunicorn>=22"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.urls]
+Homepage = "https://github.com/filias/memi-engine"
+Repository = "https://github.com/filias/memi-engine"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["memi_engine"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+
+[tool.hatch.build]
+include = [
+    "memi_engine/**/*.py",
+    "memi_engine/templates/**",
+    "memi_engine/static/**",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

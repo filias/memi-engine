@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.title }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}?v={{ version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ version }}">
+    <script>
+    var t = localStorage.getItem('memi-theme') || '{{ config.default_theme }}';
+    document.documentElement.dataset.theme = t;
+    </script>
+</head>
+<body>
+    <div class="theme-picker">
+        <span class="theme-label">theme</span>
+        {% for theme in config.themes %}
+        <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick="setTheme('{{ theme }}')"></div>
+        {% endfor %}
+    </div>
+    <div class="top-right">
+        {% if config.sponsor_url %}
+        <a href="{{ config.sponsor_url }}" target="_blank" rel="noopener" class="about-link sponsor-heart" title="sponsor this project">&#9825; {{ config.sponsor_text }}</a>
+        {% endif %}
+        <a href="/about" class="about-link">about</a>
+    </div>
+    <h1>{{ config.title }}</h1>
+    <p class="subtitle">{{ config.subtitle }}</p>
+
+    <div class="categories" id="main-categories">
+        {% for item in top_level %}
+        {% if item.has_submenu %}
+        <button onclick="toggleSubmenu('{{ item.label }}')">{{ item.label }}</button>
+        {% else %}
+        <button onclick="selectCategory('{{ item.key }}'); this.classList.add('active')">{{ item.label }}</button>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="categories submenu" id="submenu" style="display:none">
+        <button class="back-btn" onclick="closeSubmenu()">&larr;</button>
+        <div id="submenu-buttons" style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center;"></div>
+    </div>
+
+    {% for filter_name, filter_info in filters.items() %}
+    <div class="continent-filter" id="{{ filter_name }}-filter">
+        {% for option in filter_info.options %}
+        <button onclick="toggleFilter('{{ filter_name }}', '{{ option }}', this)">{{ option }}</button>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="card" id="card" onclick="handleClick()">
+        <span class="loading" id="status">pick a category</span>
+        <img id="image" style="display:none" alt="">
+        <div class="clue" id="clue"></div>
+        <div class="answer" id="answer"></div>
+        <div class="tag" id="tag" style="display:none"></div>
+        <img class="reveal-image" id="reveal-image" alt="">
+    </div>
+    <p class="hint" id="hint"></p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:1rem;">
+        <button id="clue-toggle" class="bottom-btn" onclick="toggleClueMode()" title="Reveal the answer one letter at a time">clues: off</button>
+        <button id="report-btn" class="bottom-btn" onclick="reportItem()" title="Report bad or wrong image" style="display:none;">report</button>
+    </div>
+    <div id="clue-area" style="display:none; text-align:center;">
+        <button id="clue-btn" onclick="revealLetter()">show letter</button>
+        <p id="clue-letters" class="clue-letters"></p>
+    </div>
+
+    <script>
+    function setTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('memi-theme', theme);
+        document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === theme));
+    }
+    setTheme(localStorage.getItem('memi-theme') || '{{ config.default_theme }}');
+
+    // Filter config from server
+    var FILTER_CONFIG = {{ filters | tojson }};
+    </script>
+    <script id="subcategories-data" type="application/json">{{ subcategories | tojson }}</script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
+
+    {% for footer_id, footer_html in config.footers.items() %}
+    <footer id="{{ footer_id }}-footer" style="display:none; margin-top:3rem; padding:1rem; text-align:center; font-size:0.75rem; color:var(--muted);">
+        {{ footer_html | safe }}
+    </footer>
+    {% endfor %}
+    <footer id="wikipedia-footer" style="margin-top:3rem; padding:1rem; text-align:center; font-size:0.75rem; color:var(--muted);">
+        Images from <a href="https://www.wikipedia.org/" target="_blank" rel="noopener" style="color:var(--link);">Wikipedia</a>
+        &amp; <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener" style="color:var(--link);">Wikimedia Commons</a>
+    </footer>
+    <div style="text-align:center; padding:1rem; font-size:0.65rem; color:var(--version-color);">{{ version }}</div>
+    {% if config.analytics_html %}
+    {{ config.analytics_html | safe }}
+    {% endif %}
+</body>
+</html>
