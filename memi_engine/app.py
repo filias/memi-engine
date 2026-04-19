@@ -215,9 +215,9 @@ def _load_excluded_items(app):
     """Load excluded items from file if it exists."""
     import os
 
-    excluded_file = os.path.join(
-        app.root_path if app.root_path else ".", "excluded_items.txt"
-    )
+    # Use current working directory for data files, not the engine package
+    data_dir = os.getcwd()
+    excluded_file = os.path.join(data_dir, "excluded_items.txt")
     if os.path.isfile(excluded_file):
         with open(excluded_file) as f:
             for line in f:
@@ -226,9 +226,7 @@ def _load_excluded_items(app):
                     _excluded_items.add(line)
 
     # Set up report logging
-    report_log = os.path.join(
-        app.root_path if app.root_path else ".", "reported_items.log"
-    )
+    report_log = os.path.join(data_dir, "reported_items.log")
     handler = logging.FileHandler(report_log)
     handler.setFormatter(
         logging.Formatter("%(asctime)s %(message)s")
