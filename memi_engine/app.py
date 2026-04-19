@@ -37,25 +37,24 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
     engine_templates = os.path.join(engine_dir, "templates")
     engine_static = os.path.join(engine_dir, "static")
 
+    # Disable Flask's built-in static handler — we'll handle it ourselves
     app = Flask(
         __name__,
         template_folder=engine_templates,
-        static_folder=engine_static,
+        static_folder=None,
     )
 
-    # If instance has its own static folder, serve those files too
-    # at the same /static/ URL, checked first before engine files
-    if instance_static:
-        from flask import send_from_directory
+    # Custom static file handler: instance first, then engine
+    from flask import send_from_directory
 
-        @app.route("/static/<path:filename>")
-        def combined_static(filename):
-            # Try instance static first
-            instance_path = os.path.join(instance_static, filename)
-            if os.path.isfile(instance_path):
-                return send_from_directory(instance_static, filename)
-            # Fall back to engine static
-            return send_from_directory(engine_static, filename)
+    static_dirs = [instance_static, engine_static] if instance_static else [engine_static]
+
+    @app.route("/static/<path:filename>")
+    def static(filename):
+        for d in static_dirs:
+            if d and os.path.isfile(os.path.join(d, filename)):
+                return send_from_directory(d, filename)
+        return "Not found", 404
 
     # Detect git version
     if not config.version:
