@@ -37,26 +37,25 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
     engine_templates = os.path.join(engine_dir, "templates")
     engine_static = os.path.join(engine_dir, "static")
 
-    # Template loader: instance templates first, then engine
-    template_folders = [engine_templates]
-
     app = Flask(
         __name__,
         template_folder=engine_templates,
-        static_folder=instance_static or engine_static,
+        static_folder=engine_static,
     )
 
-    # If instance has its own static folder, also serve engine static
+    # If instance has its own static folder, serve those files too
+    # at the same /static/ URL, checked first before engine files
     if instance_static:
-        from flask import Blueprint
+        from flask import send_from_directory
 
-        engine_bp = Blueprint(
-            "engine_static",
-            __name__,
-            static_folder=engine_static,
-            static_url_path="/engine-static",
-        )
-        app.register_blueprint(engine_bp)
+        @app.route("/static/<path:filename>")
+        def combined_static(filename):
+            # Try instance static first
+            instance_path = os.path.join(instance_static, filename)
+            if os.path.isfile(instance_path):
+                return send_from_directory(instance_static, filename)
+            # Fall back to engine static
+            return send_from_directory(engine_static, filename)
 
     # Detect git version
     if not config.version:
