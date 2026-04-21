@@ -37,3 +37,18 @@ class MemiConfig:
     analytics_html: str | None = None
     footers: dict[str, str] = field(default_factory=dict)
     version: str = ""
+
+    # UI labels (for i18n)
+    label_theme: str = "theme"
+    label_about: str = "about"
+    label_report: str = "report"
+    label_reported: str = "reported"
+    label_clues_on: str = "clues: on"
+    label_clues_off: str = "clues: off"
+    label_show_letter: str = "show letter"
+    label_pick_category: str = "pick a category"
+    label_loading: str = "loading..."
+    label_all_done: str = "all done! click to start over"
+    label_click_to_reveal: str = "click the image to reveal the answer"
+    label_click_for_new: str = "click again for a new one"
+    label_back: str = "back to playing"

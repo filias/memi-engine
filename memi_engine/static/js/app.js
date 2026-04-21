@@ -98,7 +98,7 @@ function toggleSubcategory(key, btn) {
 function toggleClueMode() {
     clueMode = !clueMode;
     const btn = document.getElementById('clue-toggle');
-    btn.textContent = clueMode ? 'clues: on' : 'clues: off';
+    btn.textContent = clueMode ? LABELS.cluesOn : LABELS.cluesOff;
     btn.classList.toggle('active', clueMode);
     document.getElementById('clue-area').style.display = (clueMode && loaded && !revealed) ? 'block' : 'none';
 }
@@ -212,12 +212,12 @@ async function loadNew() {
     tag.textContent = '';
     document.getElementById('reveal-image').style.display = 'none';
     status.style.display = 'block';
-    status.textContent = 'loading...';
+    status.textContent = LABELS.loading;
     status.className = 'loading';
     hint.textContent = '';
     const reportBtn = document.getElementById('report-btn');
     reportBtn.style.display = 'none';
-    reportBtn.textContent = 'report';
+    reportBtn.textContent = LABELS.report;
     reportBtn.disabled = false;
     reportBtn.style.color = '';
     reportBtn.style.borderColor = '';
@@ -246,7 +246,7 @@ async function loadNew() {
         currentCats = selectedCategories.join(',');
         lettersRevealed = 0;
         loaded = true;
-        hint.textContent = 'click the image to reveal the answer';
+        hint.textContent = LABELS.clickToReveal;
         updateFooters(data);
 
         const clueArea = document.getElementById('clue-area');
@@ -288,7 +288,7 @@ async function loadNew() {
             currentCats = selectedCategories.join(',');
             lettersRevealed = 0;
             loaded = true;
-            hint.textContent = 'click the image to reveal the answer';
+            hint.textContent = LABELS.clickToReveal;
             updateFooters(data);
 
             const clueArea = document.getElementById('clue-area');
@@ -305,7 +305,7 @@ async function loadNew() {
         }
     }
     seenItems = [];
-    status.textContent = 'all done! click to start over';
+    status.textContent = LABELS.allDone;
     status.className = 'loading';
     loaded = false;
 }
@@ -328,7 +328,7 @@ function showTag(tagEl) {
 
 async function reportItem() {
     const btn = document.getElementById('report-btn');
-    btn.textContent = 'reported';
+    btn.textContent = LABELS.reported;
     btn.disabled = true;
     btn.style.color = 'var(--accent)';
     btn.style.borderColor = 'var(--accent)';
@@ -371,7 +371,7 @@ function handleClick() {
     if (!revealed) {
         document.getElementById('answer').textContent = currentName;
         document.getElementById('card').classList.add('revealed');
-        document.getElementById('hint').textContent = 'click again for a new one';
+        document.getElementById('hint').textContent = LABELS.clickForNew;
         document.getElementById('clue-area').style.display = 'none';
         if (currentTag) {
             showTag(document.getElementById('tag'));

@@ -13,16 +13,16 @@
 </head>
 <body>
     <div class="theme-picker">
-        <span class="theme-label">theme</span>
+        <span class="theme-label">{{ config.label_theme }}</span>
         {% for theme in config.themes %}
         <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick="setTheme('{{ theme }}')"></div>
         {% endfor %}
     </div>
     <div class="top-right">
         {% if config.sponsor_url %}
-        <a href="{{ config.sponsor_url }}" target="_blank" rel="noopener" class="about-link sponsor-heart" title="sponsor this project">&#9825; {{ config.sponsor_text }}</a>
+        <a href="{{ config.sponsor_url }}" target="_blank" rel="noopener" class="about-link sponsor-heart" title="{{ config.sponsor_text }}">&#9825; {{ config.sponsor_text }}</a>
         {% endif %}
-        <a href="/about" class="about-link">about</a>
+        <a href="/about" class="about-link">{{ config.label_about }}</a>
     </div>
     <h1>{{ config.title }}</h1>
     <p class="subtitle">{{ config.subtitle }}</p>
@@ -51,7 +51,7 @@
     {% endfor %}
 
     <div class="card" id="card" onclick="handleClick()">
-        <span class="loading" id="status">pick a category</span>
+        <span class="loading" id="status">{{ config.label_pick_category }}</span>
         <img id="image" style="display:none" alt="">
         <div class="clue" id="clue"></div>
         <div class="answer" id="answer"></div>
@@ -60,11 +60,11 @@
     </div>
     <p class="hint" id="hint"></p>
     <div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:1rem;">
-        <button id="clue-toggle" class="bottom-btn" onclick="toggleClueMode()" title="Reveal the answer one letter at a time">clues: off</button>
-        <button id="report-btn" class="bottom-btn" onclick="reportItem()" title="Report bad or wrong image" style="display:none;">report</button>
+        <button id="clue-toggle" class="bottom-btn" onclick="toggleClueMode()">{{ config.label_clues_off }}</button>
+        <button id="report-btn" class="bottom-btn" onclick="reportItem()" style="display:none;">{{ config.label_report }}</button>
     </div>
     <div id="clue-area" style="display:none; text-align:center;">
-        <button id="clue-btn" onclick="revealLetter()">show letter</button>
+        <button id="clue-btn" onclick="revealLetter()">{{ config.label_show_letter }}</button>
         <p id="clue-letters" class="clue-letters"></p>
     </div>
 
@@ -76,7 +76,17 @@
     }
     setTheme(localStorage.getItem('memi-theme') || '{{ config.default_theme }}');
 
-    // Filter config from server
+    // Labels and filter config from server
+    var LABELS = {
+        cluesOn: {{ config.label_clues_on | tojson }},
+        cluesOff: {{ config.label_clues_off | tojson }},
+        report: {{ config.label_report | tojson }},
+        reported: {{ config.label_reported | tojson }},
+        loading: {{ config.label_loading | tojson }},
+        allDone: {{ config.label_all_done | tojson }},
+        clickToReveal: {{ config.label_click_to_reveal | tojson }},
+        clickForNew: {{ config.label_click_for_new | tojson }},
+    };
     var FILTER_CONFIG = {{ filters | tojson }};
     </script>
     <script id="subcategories-data" type="application/json">{{ subcategories | tojson }}</script>
