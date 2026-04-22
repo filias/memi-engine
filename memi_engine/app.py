@@ -223,11 +223,14 @@ def _load_excluded_items(app):
                 if line:
                     _excluded_items.add(line)
 
-    # Set up report logging
+    # Set up report logging (don't crash if we can't write)
     report_log = os.path.join(data_dir, "reported_items.log")
-    handler = logging.FileHandler(report_log)
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s %(message)s")
-    )
-    logging.getLogger("reports").addHandler(handler)
+    try:
+        handler = logging.FileHandler(report_log)
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(message)s")
+        )
+        logging.getLogger("reports").addHandler(handler)
+    except PermissionError:
+        pass  # Reports won't be saved but app still works
     logging.getLogger("reports").setLevel(logging.INFO)
