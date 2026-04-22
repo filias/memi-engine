@@ -211,6 +211,8 @@ async function loadNew() {
     tag.style.display = 'none';
     tag.textContent = '';
     document.getElementById('reveal-image').style.display = 'none';
+    const doneArt2 = document.getElementById('done-art');
+    if (doneArt2) doneArt2.style.display = 'none';
     status.style.display = 'block';
     status.textContent = LABELS.loading;
     status.className = 'loading';
@@ -308,6 +310,8 @@ async function loadNew() {
     status.textContent = LABELS.allDone;
     status.className = 'loading';
     loaded = false;
+    const doneArt = document.getElementById('done-art');
+    if (doneArt) doneArt.style.display = 'block';
 }
 
 function showTag(tagEl) {

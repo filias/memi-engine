@@ -52,3 +52,4 @@ class MemiConfig:
     label_click_to_reveal: str = "click the image to reveal the answer"
     label_click_for_new: str = "click again for a new one"
     label_back: str = "back to playing"
+    done_html: str = ""  # Custom HTML shown when all items are done
