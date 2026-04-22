@@ -57,12 +57,12 @@
         <div class="answer" id="answer"></div>
         <div class="tag" id="tag" style="display:none"></div>
         <img class="reveal-image" id="reveal-image" alt="">
+        {% if config.done_html %}
+        <div id="done-art" style="display:none">
+            {{ config.done_html | safe }}
+        </div>
+        {% endif %}
     </div>
-    {% if config.done_html %}
-    <div id="done-art" style="display:none; text-align:center; margin-top:1rem;">
-        {{ config.done_html | safe }}
-    </div>
-    {% endif %}
     <p class="hint" id="hint"></p>
     <div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:1rem;">
         <button id="clue-toggle" class="bottom-btn" onclick="toggleClueMode()">{{ config.label_clues_off }}</button>

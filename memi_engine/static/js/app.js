@@ -307,11 +307,16 @@ async function loadNew() {
         }
     }
     seenItems = [];
-    status.textContent = LABELS.allDone;
-    status.className = 'loading';
     loaded = false;
     const doneArt = document.getElementById('done-art');
-    if (doneArt) doneArt.style.display = 'block';
+    if (doneArt) {
+        status.style.display = 'none';
+        doneArt.style.display = 'flex';
+        hint.textContent = LABELS.allDone;
+    } else {
+        status.textContent = LABELS.allDone;
+        status.className = 'loading';
+    }
 }
 
 function showTag(tagEl) {
