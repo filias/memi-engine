@@ -53,3 +53,6 @@ class MemiConfig:
     label_click_for_new: str = "click again for a new one"
     label_back: str = "back to playing"
     done_html: str = ""  # Custom HTML shown when all items are done
+
+    # Favicon
+    favicon_color: str = "#b8860b"  # background of the rounded square; default dark goldenrod

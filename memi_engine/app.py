@@ -11,7 +11,7 @@ import logging
 import random
 import subprocess
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 
 from memi_engine import registry
 from memi_engine.config import MemiConfig
@@ -55,6 +55,18 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             if d and os.path.isfile(os.path.join(d, filename)):
                 return send_from_directory(d, filename)
         return "Not found", 404
+
+    @app.route("/favicon.svg")
+    def favicon():
+        svg = (
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+            f'<rect width="64" height="64" rx="14" fill="{config.favicon_color}"/>'
+            '<text x="32" y="46" font-family="system-ui,-apple-system,sans-serif" '
+            'font-size="40" font-weight="700" text-anchor="middle" fill="#fff" '
+            'letter-spacing="-1">m</text>'
+            "</svg>"
+        )
+        return Response(svg, mimetype="image/svg+xml")
 
     # Detect git version
     if not config.version:
