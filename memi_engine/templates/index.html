@@ -56,7 +56,6 @@
         <div class="clue" id="clue"></div>
         <div class="answer" id="answer"></div>
         <div class="tag" id="tag" style="display:none"></div>
-        <a class="more-link" id="more-link" target="_blank" rel="noopener" style="display:none" onclick="event.stopPropagation()">{{ config.label_more }} &rarr;</a>
         <img class="reveal-image" id="reveal-image" alt="">
         {% if config.done_html %}
         <div id="done-art" style="display:none">
@@ -68,6 +67,7 @@
     <div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:1rem;">
         <button id="clue-toggle" class="bottom-btn" onclick="toggleClueMode()">{{ config.label_clues_off }}</button>
         <button id="report-btn" class="bottom-btn" onclick="reportItem()" style="display:none;">{{ config.label_report }}</button>
+        <a class="more-link" id="more-link" target="_blank" rel="noopener" style="display:none">{{ config.label_more }} &rarr;</a>
     </div>
     <div id="clue-area" style="display:none; text-align:center;">
         <button id="clue-btn" onclick="revealLetter()">{{ config.label_show_letter }}</button>

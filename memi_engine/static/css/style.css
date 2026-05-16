@@ -622,8 +622,6 @@ h1 a {
 }
 
 .more-link {
-    display: inline-block;
-    margin-top: 0.75rem;
     color: var(--link);
     text-decoration: none;
     font-size: 0.9rem;
