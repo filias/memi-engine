@@ -594,3 +594,28 @@ h1 a {
 .back-link:hover {
     color: var(--accent);
 }
+
+.related-sites {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.related-sites a {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: 2rem;
+    color: var(--btn-text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.related-sites a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
