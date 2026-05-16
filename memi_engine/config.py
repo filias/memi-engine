@@ -19,6 +19,8 @@ class MemiConfig:
         about_html: Custom HTML for the about page body.
         analytics_html: Analytics script HTML (e.g. GoatCounter).
         footers: Dict of footer_id -> HTML content for attribution footers.
+        related_sites: List of sibling memi games to link from the about page.
+            Each item is {"name": ..., "url": ...}.
         version: Version string shown in the footer (auto-detected from git).
     """
 
@@ -36,6 +38,7 @@ class MemiConfig:
     about_html: str | None = None
     analytics_html: str | None = None
     footers: dict[str, str] = field(default_factory=dict)
+    related_sites: list[dict[str, str]] = field(default_factory=list)
     version: str = ""
 
     # UI labels (for i18n)
@@ -52,6 +55,7 @@ class MemiConfig:
     label_click_to_reveal: str = "click the image to reveal the answer"
     label_click_for_new: str = "click again for a new one"
     label_back: str = "back to playing"
+    label_related_sites: str = "more memi games"
     done_html: str = ""  # Custom HTML shown when all items are done
 
     # Favicon

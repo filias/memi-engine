@@ -28,6 +28,15 @@
         <p>No accounts, no scores, no pressure. Just you and your memory.</p>
         {% endif %}
 
+        {% if config.related_sites %}
+        <p>{{ config.label_related_sites }}:</p>
+        <ul class="related-sites">
+            {% for site in config.related_sites %}
+            <li><a href="{{ site.url }}" target="_blank" rel="noopener">{{ site.name }}</a></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
         <p><a href="/" class="back-link">&larr; {{ config.label_back }}</a></p>
     </div>
     <script>
