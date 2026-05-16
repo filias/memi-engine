@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import time
+from urllib.parse import quote
 
 import requests
 
@@ -66,7 +67,12 @@ def _fetch_wikipedia_image(title):
         for page in pages.values():
             thumb = page.get("thumbnail", {}).get("source")
             if thumb:
-                return {"name": page.get("title", title), "image": thumb}
+                page_title = page.get("title", title)
+                return {
+                    "name": page_title,
+                    "image": thumb,
+                    "url": f"https://en.wikipedia.org/wiki/{quote(page_title.replace(' ', '_'))}",
+                }
     except Exception:
         pass
     return None
@@ -162,7 +168,11 @@ def _fetch_commons_file_image(filename):
                 info = page["imageinfo"][0]
                 thumb = info.get("thumburl") or info.get("url")
                 if thumb:
-                    return {"name": filename, "image": thumb}
+                    return {
+                        "name": filename,
+                        "image": thumb,
+                        "url": f"https://commons.wikimedia.org/wiki/File:{quote(filename.replace(' ', '_'))}",
+                    }
     except Exception:
         pass
     return None

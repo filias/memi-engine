@@ -4,6 +4,7 @@ let loaded = false;
 let clueMode = false;
 let currentName = '';
 let currentTag = '';
+let currentMoreUrl = '';
 let currentRevealImage = '';
 let currentItem = '';
 let currentCats = '';
@@ -210,6 +211,8 @@ async function loadNew() {
     clue.textContent = '';
     tag.style.display = 'none';
     tag.textContent = '';
+    const moreLink = document.getElementById('more-link');
+    if (moreLink) { moreLink.style.display = 'none'; moreLink.href = ''; }
     document.getElementById('reveal-image').style.display = 'none';
     const doneArt2 = document.getElementById('done-art');
     if (doneArt2) doneArt2.style.display = 'none';
@@ -243,6 +246,7 @@ async function loadNew() {
         if (data.clue) { clue.textContent = data.clue; clue.style.display = 'block'; }
         currentName = data.name;
         currentTag = data.tag || '';
+        currentMoreUrl = data.url || '';
         currentRevealImage = data.reveal_image || '';
         currentItem = data.item || data.name;
         currentCats = selectedCategories.join(',');
@@ -285,6 +289,7 @@ async function loadNew() {
             }
             currentName = data.name;
             currentTag = data.tag || '';
+            currentMoreUrl = data.url || '';
             currentRevealImage = data.reveal_image || '';
             currentItem = data.item || data.name;
             currentCats = selectedCategories.join(',');
@@ -384,6 +389,11 @@ function handleClick() {
         document.getElementById('clue-area').style.display = 'none';
         if (currentTag) {
             showTag(document.getElementById('tag'));
+        }
+        if (currentMoreUrl) {
+            const moreLink = document.getElementById('more-link');
+            moreLink.href = currentMoreUrl;
+            moreLink.style.display = 'inline-block';
         }
         if (currentRevealImage) {
             const revealImg = document.getElementById('reveal-image');

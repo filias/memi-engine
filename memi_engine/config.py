@@ -56,6 +56,7 @@ class MemiConfig:
     label_click_for_new: str = "click again for a new one"
     label_back: str = "back to playing"
     label_related_sites: str = "more memi games"
+    label_more: str = "know more"
     done_html: str = ""  # Custom HTML shown when all items are done
 
     # Favicon
