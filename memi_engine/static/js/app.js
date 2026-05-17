@@ -4,6 +4,7 @@ let loaded = false;
 let clueMode = false;
 let currentName = '';
 let currentTag = '';
+let currentTagStyle = '';
 let currentMoreUrl = '';
 let currentRevealImage = '';
 let currentItem = '';
@@ -246,6 +247,7 @@ async function loadNew() {
         if (data.clue) { clue.textContent = data.clue; clue.style.display = 'block'; }
         currentName = data.name;
         currentTag = data.tag || '';
+        currentTagStyle = data.tag_style || '';
         currentMoreUrl = data.url || '';
         currentRevealImage = data.reveal_image || '';
         currentItem = data.item || data.name;
@@ -325,6 +327,16 @@ async function loadNew() {
 }
 
 function showTag(tagEl) {
+    if (currentTagStyle === 'plain') {
+        tagEl.textContent = currentTag.replace(/[,\s]+$/, '');
+        tagEl.style.display = 'block';
+        return;
+    }
+    if (currentTagStyle === 'scientific') {
+        tagEl.innerHTML = '<em class="tag-dates">' + currentTag + '</em>';
+        tagEl.style.display = 'block';
+        return;
+    }
     const dateMatch = currentTag.match(/^(.*?)(\d{3,4}[–—-]?\d{0,4})\s*$/);
     const sciMatch = currentTag.match(/^[A-Z][a-z]+(\s[a-z]+)?$/);
     if (dateMatch && dateMatch[1].trim()) {

@@ -33,6 +33,7 @@ class CategoryProvider:
     light_bg: bool = False
     override_name: bool = False
     footers: list[str] = []
+    tag_style: str | None = None  # "plain", "scientific", or None (auto-detect)
 
     def get_image(self, item: str) -> dict | None:
         """Return ``{"name": ..., "image": ...}`` or ``None``.

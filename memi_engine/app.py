@@ -161,6 +161,8 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             tag = provider.get_tag(item)
             if tag:
                 result["tag"] = tag
+                if provider.tag_style:
+                    result["tag_style"] = provider.tag_style
 
             # Clue
             clue = provider.get_clue(item)
