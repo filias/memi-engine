@@ -16,5 +16,13 @@ from memi_engine.app import create_app
 from memi_engine.config import MemiConfig
 from memi_engine.provider import CategoryProvider
 from memi_engine.registry import register
+from memi_engine.scientific import SCIENTIFIC_NAMES, ScientificNameProvider
 
-__all__ = ["CategoryProvider", "MemiConfig", "create_app", "register"]
+__all__ = [
+    "SCIENTIFIC_NAMES",
+    "CategoryProvider",
+    "MemiConfig",
+    "ScientificNameProvider",
+    "create_app",
+    "register",
+]
