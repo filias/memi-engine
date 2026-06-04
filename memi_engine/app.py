@@ -8,10 +8,18 @@ anything about specific categories.
 from __future__ import annotations
 
 import logging
+import os
 import random
 import subprocess
 
-from flask import Flask, Response, jsonify, render_template, request
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    render_template,
+    request,
+    send_from_directory,
+)
 
 from memi_engine import registry
 from memi_engine.config import MemiConfig
@@ -31,8 +39,6 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         instance_static: Path to the instance's static folder (for logos, etc.).
             If provided, files here are served alongside the engine's static files.
     """
-    import os
-
     engine_dir = os.path.dirname(__file__)
     engine_templates = os.path.join(engine_dir, "templates")
     engine_static = os.path.join(engine_dir, "static")
@@ -45,9 +51,9 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
     )
 
     # Custom static file handler: instance first, then engine
-    from flask import send_from_directory
-
-    static_dirs = [instance_static, engine_static] if instance_static else [engine_static]
+    static_dirs = (
+        [instance_static, engine_static] if instance_static else [engine_static]
+    )
 
     @app.route("/static/<path:filename>")
     def static(filename):
@@ -192,10 +198,6 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             )
         return jsonify({"ok": True})
 
-    @app.route("/review")
-    def review():
-        return render_template("review.html", reports=[], config=config)
-
     return app
 
 
@@ -225,8 +227,6 @@ def _collect_filters() -> dict:
 
 def _load_excluded_items(app):
     """Load excluded items from file if it exists."""
-    import os
-
     # Use current working directory for data files, not the engine package
     data_dir = os.getcwd()
     excluded_file = os.path.join(data_dir, "excluded_items.txt")

@@ -68,10 +68,11 @@ def _fetch_wikipedia_image(title):
             thumb = page.get("thumbnail", {}).get("source")
             if thumb:
                 page_title = page.get("title", title)
+                slug = quote(page_title.replace(" ", "_"))
                 return {
                     "name": page_title,
                     "image": thumb,
-                    "url": f"https://en.wikipedia.org/wiki/{quote(page_title.replace(' ', '_'))}",
+                    "url": f"https://en.wikipedia.org/wiki/{slug}",
                 }
     except Exception:
         pass
@@ -168,10 +169,11 @@ def _fetch_commons_file_image(filename):
                 info = page["imageinfo"][0]
                 thumb = info.get("thumburl") or info.get("url")
                 if thumb:
+                    slug = quote(filename.replace(" ", "_"))
                     return {
                         "name": filename,
                         "image": thumb,
-                        "url": f"https://commons.wikimedia.org/wiki/File:{quote(filename.replace(' ', '_'))}",
+                        "url": f"https://commons.wikimedia.org/wiki/File:{slug}",
                     }
     except Exception:
         pass
@@ -357,12 +359,17 @@ def get_river_map(title: str) -> dict | None:
         map_keywords = ["map", "basin", "watershed", "course", "locator"]
         map_files = []
         river_name = (
-            title.split("(")[0].replace("River", "").replace("river", "").strip().lower()
+            title.split("(")[0]
+            .replace("River", "")
+            .replace("river", "")
+            .strip()
+            .lower()
         )
         for page in pages.values():
             for img in page.get("images", []):
                 fname = img["title"].lower()
-                if any(kw in fname for kw in map_keywords) and "commons-logo" not in fname:
+                is_map = any(kw in fname for kw in map_keywords)
+                if is_map and "commons-logo" not in fname:
                     map_files.append(img["title"])
         if not map_files:
             return None

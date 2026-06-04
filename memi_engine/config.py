@@ -59,5 +59,5 @@ class MemiConfig:
     label_more: str = "know more"
     done_html: str = ""  # Custom HTML shown when all items are done
 
-    # Favicon
-    favicon_color: str = "#b8860b"  # background of the rounded square; default dark goldenrod
+    # Favicon: background of the rounded square (default dark goldenrod)
+    favicon_color: str = "#b8860b"
