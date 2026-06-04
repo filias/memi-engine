@@ -9,3 +9,7 @@ build/
 .pytest_cache/
 .idea/
 .DS_Store
+
+# runtime data files (created at app run time)
+reported_items.log
+excluded_items.txt

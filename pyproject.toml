@@ -3,16 +3,24 @@ name = "memi-engine"
 version = "0.1.0"
 description = "Engine for building memi memory card game instances"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Filipa Andrade", email = "filipa.andrade@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"
-keywords = ["memi", "memory", "game", "education"]
+keywords = ["memi", "memory", "game", "education", "flask", "quiz"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Education",
     "License :: OSI Approved :: MIT License",
+    "Framework :: Flask",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Games/Entertainment",
+    "Topic :: Education",
 ]
 dependencies = [
     "flask>=3.0",
@@ -24,8 +32,9 @@ server = ["gunicorn>=22"]
 dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.urls]
-Homepage = "https://github.com/filias/memi-engine"
+Homepage = "https://memi.click"
 Repository = "https://github.com/filias/memi-engine"
+Issues = "https://github.com/filias/memi-engine/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -33,8 +42,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["memi_engine"]
-
-[tool.hatch.build.targets.wheel.shared-data]
 
 [tool.hatch.build]
 include = [
