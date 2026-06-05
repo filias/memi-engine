@@ -17,6 +17,23 @@ HEADERS = {"User-Agent": "Memi/1.0 (https://memi.click; memi@memi.click)"}
 TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
 BONES_API_URL = os.environ.get("BONES_API_URL", "http://127.0.0.1:8081")
 
+# Wikipedia language edition used by the default image/description helpers.
+# Configurable via MemiConfig.wikipedia_lang or the MEMI_WIKIPEDIA_LANG env var.
+_WIKIPEDIA_LANG = os.environ.get("MEMI_WIKIPEDIA_LANG", "en")
+
+
+def set_wikipedia_lang(lang: str) -> None:
+    """Set the Wikipedia language edition used by the default helpers (e.g. "pt")."""
+    global _WIKIPEDIA_LANG
+    if lang:
+        _WIKIPEDIA_LANG = lang
+
+
+def _wiki_api() -> str:
+    """Return the Wikipedia action-API endpoint for the configured language."""
+    return f"https://{_WIKIPEDIA_LANG}.wikipedia.org/w/api.php"
+
+
 # Simple in-memory cache: {key: (result, timestamp)}
 _cache: dict = {}
 _CACHE_TTL = 3600  # 1 hour
@@ -50,7 +67,7 @@ def get_wikipedia_image(title: str) -> dict | None:
 def _fetch_wikipedia_image(title):
     try:
         resp = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": title,
@@ -72,7 +89,7 @@ def _fetch_wikipedia_image(title):
                 return {
                     "name": page_title,
                     "image": thumb,
-                    "url": f"https://en.wikipedia.org/wiki/{slug}",
+                    "url": f"https://{_WIKIPEDIA_LANG}.wikipedia.org/wiki/{slug}",
                 }
     except Exception:
         pass
@@ -89,7 +106,7 @@ def get_wikipedia_file_image(filename: str) -> dict | None:
 def _fetch_wikipedia_file_image(filename):
     try:
         resp = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": f"File:{filename}",
@@ -125,7 +142,7 @@ def get_wikipedia_description(title: str) -> str:
 def _fetch_wikipedia_description(title):
     try:
         resp = requests.get(
-            "https://en.wikipedia.org/api/rest_v1/page/summary/" + title,
+            f"https://{_WIKIPEDIA_LANG}.wikipedia.org/api/rest_v1/page/summary/{title}",
             headers=HEADERS,
             timeout=5,
         )
@@ -342,7 +359,7 @@ def get_river_map(title: str) -> dict | None:
     """Find a river map/basin image from Wikipedia."""
     try:
         resp = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": title,
@@ -381,7 +398,7 @@ def get_river_map(title: str) -> dict | None:
         if not chosen:
             chosen = map_files[0]
         resp2 = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": chosen,
@@ -415,7 +432,7 @@ def _fetch_country_shape(country):
     filename = f"File:{country} (orthographic projection).svg"
     try:
         resp = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": filename,
@@ -504,7 +521,7 @@ def get_logo_image(title: str) -> dict | None:
     """Search a Wikipedia article for logo images."""
     try:
         resp = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": title,
@@ -537,7 +554,7 @@ def get_logo_image(title: str) -> dict | None:
         if not logo_file:
             logo_file = logo_files[0]
         resp2 = requests.get(
-            "https://en.wikipedia.org/w/api.php",
+            _wiki_api(),
             params={
                 "action": "query",
                 "titles": logo_file,

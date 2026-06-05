@@ -61,3 +61,6 @@ class MemiConfig:
 
     # Favicon: background of the rounded square (default dark goldenrod)
     favicon_color: str = "#b8860b"
+
+    # Wikipedia language edition for the default image / "know more" helpers.
+    wikipedia_lang: str = "en"
