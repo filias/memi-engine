@@ -1,5 +1,6 @@
 # memi-engine
 
+[![CI](https://github.com/filias/memi-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/filias/memi-engine/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/memi-engine.svg)](https://pypi.org/project/memi-engine/)
 [![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/memi-engine/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -87,6 +88,9 @@ class Monuments(CategoryProvider):
     def get_tag(self, item):       # subtitle on the revealed card
         return PARISHES.get(item)
 ```
+
+Register each provider with `register(Monuments())`, or use `@register` as a
+class decorator on the definition.
 
 **Attributes**
 
@@ -179,8 +183,13 @@ Passed to `create_app`. Common fields:
 | `about_html`      | `None`               | Custom HTML for the about page.          |
 | `analytics_html`  | `None`               | Analytics snippet injected on the page.  |
 | `favicon_color`   | `"#b8860b"`          | Favicon background colour.               |
+| `wikipedia_lang`  | `"en"`               | Wikipedia edition for default images / *know more* links. |
 | `related_sites`   | `[]`                 | Sibling games to link from the about page. |
 | `label_*`         | English strings      | UI labels (for localization).            |
+
+For a non-English game, set `wikipedia_lang` so the default image lookup and the
+*"know more"* link resolve against that language's Wikipedia (e.g. `"pt"`). It
+can also be set with the `MEMI_WIKIPEDIA_LANG` environment variable.
 
 All UI strings are `label_*` fields, so a fully localized game keeps its labels
 and `about_html` in its own language while the code stays English.

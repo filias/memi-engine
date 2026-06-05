@@ -46,6 +46,7 @@ packages = ["memi_engine"]
 [tool.hatch.build]
 include = [
     "memi_engine/**/*.py",
+    "memi_engine/py.typed",
     "memi_engine/templates/**",
     "memi_engine/static/**",
 ]
