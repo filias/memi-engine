@@ -38,3 +38,20 @@ def test_clear_empties_registry():
     register(_provider("a:b", ["x"]))
     registry.clear()
     assert registry.get_all() == {}
+
+
+def test_register_as_class_decorator():
+    @register
+    class Animals(CategoryProvider):
+        key = "nature:animals"
+        items = ["Lion"]
+
+    # The name stays bound to the class, and an instance is registered.
+    assert Animals is not None and isinstance(Animals, type)
+    assert isinstance(registry.get("nature:animals"), Animals)
+
+
+def test_register_instance_still_works():
+    p = _provider("a:b", ["x"])
+    assert register(p) is p
+    assert registry.get("a:b") is p

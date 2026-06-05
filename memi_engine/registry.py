@@ -10,9 +10,24 @@ if TYPE_CHECKING:
 _providers: dict[str, CategoryProvider] = {}
 
 
-def register(provider: CategoryProvider) -> None:
-    """Register a category provider."""
-    _providers[provider.key] = provider
+def register(
+    provider: CategoryProvider | type[CategoryProvider],
+) -> CategoryProvider | type[CategoryProvider]:
+    """Register a category provider.
+
+    Accepts a provider instance, or a ``CategoryProvider`` subclass so it can
+    be used as a class decorator::
+
+        @register
+        class Animals(CategoryProvider):
+            key = "nature:animals"
+            items = ["Lion", "Tiger"]
+
+    Returns its argument unchanged.
+    """
+    instance = provider() if isinstance(provider, type) else provider
+    _providers[instance.key] = instance
+    return provider
 
 
 def get(key: str) -> CategoryProvider | None:

@@ -35,6 +35,14 @@ class CategoryProvider:
     footers: list[str] = []
     tag_style: str | None = None  # "plain", "scientific", or None (auto-detect)
 
+    def __init__(self) -> None:
+        # Copy the declarative class-level containers onto the instance so the
+        # shared base defaults (and sibling instances) can never be mutated
+        # through one provider. Inner filter data is app-owned and read-only.
+        self.items = list(self.items)
+        self.filters = dict(self.filters)
+        self.footers = list(self.footers)
+
     def get_image(self, item: str) -> dict | None:
         """Return ``{"name": ..., "image": ...}`` or ``None``.
 
