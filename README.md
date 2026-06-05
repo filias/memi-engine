@@ -1,16 +1,26 @@
 # memi-engine
 
 [![PyPI version](https://img.shields.io/pypi/v/memi-engine.svg)](https://pypi.org/project/memi-engine/)
-[![Python versions](https://img.shields.io/pypi/pyversions/memi-engine.svg)](https://pypi.org/project/memi-engine/)
+[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/memi-engine/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-Build your own [memi](https://memi.click) memory game — a tap-to-reveal flashcard
-trainer — from a list of names and where to find their images.
+> In a world where a language model will answer almost anything in an instant, the
+> part of your mind that *recalls* — that retrieves what you know on its own — gets
+> little exercise. **memi** is a small counterweight: a game built on *active
+> recall*. You look at an image, try to name it before revealing the answer, and
+> follow the *know more* link to learn more. Each round strengthens the link
+> between what you see and what you know. The answer is always one tap away — the
+> point is to reach for it yourself first.
+
+`memi-engine` lets you build your own [memi](https://memi.click) game — a
+tap-to-reveal flashcard trainer — from a list of names and where to find their
+images.
 
 You define **categories** (countries, animals, monuments, movies…); the engine
 gives you the responsive web UI, the menu, image fetching from Wikipedia and
-friends, filters, clue mode, theming, and a reporting system.
+friends, filters, clue mode, a **"know more" link** to each item's Wikipedia
+(or source) page on reveal, theming, and a reporting system.
 
 ```bash
 pip install memi-engine
@@ -95,9 +105,15 @@ class Monuments(CategoryProvider):
 
 | Method                 | Returns                                                        |
 | ---------------------- | ------------------------------------------------------------- |
-| `get_image(item)`      | `{"name": ..., "image": url}` or `None`. Default: Wikipedia.   |
+| `get_image(item)`      | `{"name": ..., "image": ..., "url": ...}` or `None`. Default: Wikipedia. |
 | `get_tag(item)`        | A short subtitle for the revealed card, or `None`.            |
 | `get_clue(item)`       | A clue shown *before* reveal, or `None`.                      |
+
+The optional **`url`** in the `get_image` result is the item's source page; the
+engine turns it into the *"know more"* link shown on reveal (label set via
+`MemiConfig.label_more`). The built-in image helpers populate it automatically —
+e.g. `get_wikipedia_image` returns the Wikipedia article URL — so Wikipedia-backed
+categories get the link for free.
 
 ### Scientific names
 
