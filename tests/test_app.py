@@ -121,3 +121,16 @@ def test_report_endpoint(client):
     resp = client.post("/api/report", json={"item": "Alpha", "cats": "demo:items"})
     assert resp.status_code == 200
     assert resp.get_json() == {"ok": True}
+
+
+def test_report_tolerates_non_json_body(client):
+    # Must not 500 when the body isn't JSON.
+    resp = client.post("/api/report", data="not json")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ok": True}
+
+
+def test_healthz(client):
+    resp = client.get("/healthz")
+    assert resp.status_code == 200
+    assert resp.get_json()["status"] == "ok"

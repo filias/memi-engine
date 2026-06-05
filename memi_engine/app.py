@@ -21,7 +21,7 @@ from flask import (
     send_from_directory,
 )
 
-from memi_engine import registry
+from memi_engine import images, registry
 from memi_engine.config import MemiConfig
 from memi_engine.menu import build_menu
 
@@ -39,6 +39,8 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         instance_static: Path to the instance's static folder (for logos, etc.).
             If provided, files here are served alongside the engine's static files.
     """
+    images.set_wikipedia_lang(config.wikipedia_lang)
+
     engine_dir = os.path.dirname(__file__)
     engine_templates = os.path.join(engine_dir, "templates")
     engine_static = os.path.join(engine_dir, "static")
@@ -188,7 +190,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
     @app.route("/api/report", methods=["POST"])
     def report():
-        data = request.json
+        data = request.get_json(silent=True) or {}
         item = data.get("item", "")
         cats = data.get("cats", "")
         if item:
@@ -197,6 +199,10 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
                 f"REPORTED: {item} (categories: {cats})"
             )
         return jsonify({"ok": True})
+
+    @app.route("/healthz")
+    def healthz():
+        return jsonify({"status": "ok", "categories": len(registry.get_all())})
 
     return app
 
