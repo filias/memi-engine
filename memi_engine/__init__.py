@@ -14,12 +14,13 @@ Usage:
 
 from memi_engine.app import create_app
 from memi_engine.config import MemiConfig
-from memi_engine.provider import CategoryProvider
+from memi_engine.provider import AggregateProvider, CategoryProvider
 from memi_engine.registry import register
 from memi_engine.scientific import SCIENTIFIC_NAMES, ScientificNameProvider
 
 __all__ = [
     "SCIENTIFIC_NAMES",
+    "AggregateProvider",
     "CategoryProvider",
     "MemiConfig",
     "ScientificNameProvider",

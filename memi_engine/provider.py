@@ -60,3 +60,71 @@ class CategoryProvider:
     def get_clue(self, item: str) -> str | None:
         """Return a clue shown before reveal (e.g. country name), or None."""
         return None
+
+
+class AggregateProvider(CategoryProvider):
+    """An "all" provider whose contents are the union of its sibling providers.
+
+    Set only ``key`` (e.g. ``"nature:all"``). The aggregate collects every
+    registered provider sharing its parent prefix (``"nature:"``) — except other
+    aggregates and itself — and exposes the union of their items (deduped, order
+    preserved). Image, tag and clue lookups delegate to the member that owns the
+    item, so each category keeps its own behaviour.
+
+    Members are resolved lazily from the registry, so a newly added sibling
+    category flows into the aggregate automatically — no list to maintain.
+    """
+
+    def __init__(self) -> None:
+        # `items` is a computed property here, so skip the base list-copy.
+        self.filters = dict(self.filters)
+        self.footers = list(self.footers)
+
+    @property
+    def _prefix(self) -> str:
+        return self.key.rsplit(":", 1)[0] + ":"
+
+    def _members(self) -> list["CategoryProvider"]:
+        from memi_engine.registry import get_all
+
+        prefix = self._prefix
+        members = []
+        for key, prov in get_all().items():
+            if prov is self or isinstance(prov, AggregateProvider):
+                continue
+            if key.startswith(prefix):
+                members.append(prov)
+        return members
+
+    @property
+    def items(self) -> list[str]:
+        seen: set[str] = set()
+        result: list[str] = []
+        for prov in self._members():
+            for item in prov.items:
+                if item not in seen:
+                    seen.add(item)
+                    result.append(item)
+        return result
+
+    @items.setter
+    def items(self, value):  # tolerate base-class assignment, ignore it
+        pass
+
+    def _owner(self, item: str) -> "CategoryProvider | None":
+        for prov in self._members():
+            if item in prov.items:
+                return prov
+        return None
+
+    def get_image(self, item: str) -> dict | None:
+        owner = self._owner(item)
+        return owner.get_image(item) if owner else super().get_image(item)
+
+    def get_tag(self, item: str) -> str | None:
+        owner = self._owner(item)
+        return owner.get_tag(item) if owner else None
+
+    def get_clue(self, item: str) -> str | None:
+        owner = self._owner(item)
+        return owner.get_clue(item) if owner else None
