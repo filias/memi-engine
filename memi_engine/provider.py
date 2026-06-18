@@ -84,7 +84,7 @@ class AggregateProvider(CategoryProvider):
     def _prefix(self) -> str:
         return self.key.rsplit(":", 1)[0] + ":"
 
-    def _members(self) -> list["CategoryProvider"]:
+    def _members(self) -> list[CategoryProvider]:
         from memi_engine.registry import get_all
 
         prefix = self._prefix
@@ -111,7 +111,7 @@ class AggregateProvider(CategoryProvider):
     def items(self, value):  # tolerate base-class assignment, ignore it
         pass
 
-    def _owner(self, item: str) -> "CategoryProvider | None":
+    def _owner(self, item: str) -> CategoryProvider | None:
         for prov in self._members():
             if item in prov.items:
                 return prov
