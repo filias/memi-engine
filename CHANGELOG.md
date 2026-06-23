@@ -6,7 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-23
+
+Initial public release.
+
 ### Added
+- `AggregateProvider` — an "all" category whose items, images and tags are the
+  auto-derived union of its sibling providers, delegating each lookup to the
+  member that owns the item; new sibling categories flow in automatically.
 - `ScientificNameProvider` and the exported `SCIENTIFIC_NAMES` database — a
   category that tags items with their Latin name (bundled English default, or a
   custom per-language mapping).
@@ -33,7 +40,3 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 - Stopped shipping the runtime `reported_items.log` inside the package.
-
-## [0.1.0] — unreleased
-
-Initial public release.
