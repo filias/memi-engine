@@ -12,8 +12,10 @@ import time
 from urllib.parse import quote
 
 import requests
+from importlib.metadata import version as _pkg_version
 
-HEADERS = {"User-Agent": "Memi/1.0 (https://memi.click; memi@memi.click)"}
+_VERSION = _pkg_version("memi-engine")
+HEADERS = {"User-Agent": f"memi-engine/{_VERSION} (https://memi.click; memi@memi.click)"}
 TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
 BONES_API_URL = os.environ.get("BONES_API_URL", "http://127.0.0.1:8081")
 
@@ -216,7 +218,7 @@ def _fetch_tmdb_image(title, image_type="backdrop"):
         resp = requests.get(
             "https://api.themoviedb.org/3/search/movie",
             params={"query": search_term},
-            headers={"Authorization": f"Bearer {TMDB_API_KEY}"},
+            headers={**HEADERS, "Authorization": f"Bearer {TMDB_API_KEY}"},
             timeout=10,
         )
         if resp.status_code != 200:
@@ -256,7 +258,7 @@ def _fetch_tmdb_tv_image(title, image_type="backdrop"):
         resp = requests.get(
             "https://api.themoviedb.org/3/search/tv",
             params={"query": search_term},
-            headers={"Authorization": f"Bearer {TMDB_API_KEY}"},
+            headers={**HEADERS, "Authorization": f"Bearer {TMDB_API_KEY}"},
             timeout=10,
         )
         if resp.status_code != 200:
@@ -492,7 +494,7 @@ def get_grays_anatomy_image(title: str) -> dict | None:
 def get_bone_image(bone_id: str) -> dict | None:
     """Fetch a bone image from the Bones API."""
     try:
-        resp = requests.get(f"{BONES_API_URL}/bones/{bone_id}", timeout=10)
+        resp = requests.get(f"{BONES_API_URL}/bones/{bone_id}", headers=HEADERS, timeout=10)
         if resp.status_code != 200:
             return None
         data = resp.json()

@@ -6,6 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-24
+
+### Fixed
+- `User-Agent` header is now `memi-engine/<version>` with the version read
+  dynamically from package metadata instead of being hardcoded as `Memi/1.0`.
+- TMDB movie and TV fetchers now send the `User-Agent` header alongside their
+  `Authorization` header (previously omitted).
+- Bones API fetcher now sends the `User-Agent` header (previously no headers
+  were sent).
+
 ## [0.1.0] - 2026-06-23
 
 Initial public release.
