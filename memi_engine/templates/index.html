@@ -53,6 +53,7 @@
     <div class="card" id="card" onclick="handleClick()">
         <span class="loading" id="status">{{ config.label_pick_category }}</span>
         <img id="image" style="display:none" alt="">
+        <div class="reveal-hint" id="reveal-hint" style="display:none"></div>
         <div class="clue" id="clue"></div>
         <div class="answer" id="answer"></div>
         <div class="tag" id="tag" style="display:none"></div>
@@ -94,6 +95,9 @@
         clickForNew: {{ config.label_click_for_new | tojson }},
     };
     var FILTER_CONFIG = {{ filters | tojson }};
+    // Deep-link target: a category key when the page was opened via /<slug> or
+    // ?cat=<key>, else null. app.js opens straight into it on load.
+    var INITIAL_CATEGORY = {{ (initial_category or none) | tojson }};
     </script>
     <script id="subcategories-data" type="application/json">{{ subcategories | tojson }}</script>
     <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>

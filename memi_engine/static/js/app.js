@@ -212,6 +212,8 @@ async function loadNew() {
     clue.textContent = '';
     tag.style.display = 'none';
     tag.textContent = '';
+    const revealHint = document.getElementById('reveal-hint');
+    if (revealHint) { revealHint.style.display = 'none'; revealHint.textContent = ''; }
     const moreLink = document.getElementById('more-link');
     if (moreLink) { moreLink.style.display = 'none'; moreLink.href = ''; }
     document.getElementById('reveal-image').style.display = 'none';
@@ -254,7 +256,8 @@ async function loadNew() {
         currentCats = selectedCategories.join(',');
         lettersRevealed = 0;
         loaded = true;
-        hint.textContent = LABELS.clickToReveal;
+        hint.textContent = '';
+        if (revealHint) { revealHint.textContent = LABELS.clickToReveal; revealHint.style.display = 'block'; }
         updateFooters(data);
 
         const clueArea = document.getElementById('clue-area');
@@ -297,7 +300,8 @@ async function loadNew() {
             currentCats = selectedCategories.join(',');
             lettersRevealed = 0;
             loaded = true;
-            hint.textContent = LABELS.clickToReveal;
+            hint.textContent = '';
+            if (revealHint) { revealHint.textContent = LABELS.clickToReveal; revealHint.style.display = 'block'; }
             updateFooters(data);
 
             const clueArea = document.getElementById('clue-area');
@@ -399,6 +403,8 @@ function handleClick() {
         document.getElementById('card').classList.add('revealed');
         document.getElementById('hint').textContent = LABELS.clickForNew;
         document.getElementById('clue-area').style.display = 'none';
+        const revealHintEl = document.getElementById('reveal-hint');
+        if (revealHintEl) revealHintEl.style.display = 'none';
         if (currentTag) {
             showTag(document.getElementById('tag'));
         }
@@ -417,4 +423,32 @@ function handleClick() {
     } else if (selectedCategories.length > 0) {
         loadNew();
     }
+}
+
+// --- Deep-link: open straight into a category from a shareable URL ---
+// The server resolves /<slug> or ?cat=<key> to a category key and injects it as
+// INITIAL_CATEGORY. We drive the real menu buttons so the selected state and the
+// game load exactly as if the user had clicked through.
+function startInitialCategory(key) {
+    const parts = key.split(':');
+    const top = Array.prototype.slice
+        .call(document.querySelectorAll('#main-categories button'))
+        .find(b => b.textContent.trim() === parts[0]);
+    if (!top) return;
+    top.click();  // top-level: selects & loads; parent: opens its submenu
+    // Walk any intermediate group levels, then click the leaf subcategory.
+    for (let i = 1; i < parts.length - 1; i++) {
+        const group = Array.prototype.slice
+            .call(document.querySelectorAll('#submenu-buttons button'))
+            .find(b => b.textContent.trim() === parts[i] && !b.dataset.key);
+        if (group) group.click();
+    }
+    if (parts.length > 1) {
+        const leaf = document.querySelector('#submenu-buttons [data-key="' + key + '"]');
+        if (leaf) leaf.click();
+    }
+}
+
+if (typeof INITIAL_CATEGORY !== 'undefined' && INITIAL_CATEGORY) {
+    startInitialCategory(INITIAL_CATEGORY);
 }

@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **Shareable category landing pages.** Opening `/<slug>` (e.g. `/food`) or
+  `/?cat=<key>` starts the game with that category already selected and playing.
+  Slugs are derived from the registry — a key's last `:`-segment when it is
+  unique (`culture:food` → `/food`), with the full dashed key (`/culture-food`)
+  always available and the sole slug for colliding segments (several `…:all`).
+  A new `INITIAL_CATEGORY` template var drives `app.js` to open into it on load.
+
+### Changed
+- The "click to reveal" prompt is now a pill overlaid on top of the card image
+  (much more visible) instead of only small text below the card. The text is
+  still `MemiConfig.label_click_to_reveal`.
+
 ## [0.1.1] - 2026-06-24
 
 ### Fixed

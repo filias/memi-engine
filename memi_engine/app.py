@@ -11,10 +11,12 @@ import logging
 import os
 import random
 import subprocess
+from collections import Counter
 
 from flask import (
     Flask,
     Response,
+    abort,
     jsonify,
     render_template,
     request,
@@ -95,8 +97,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
     # --- Routes ---
 
-    @app.route("/")
-    def index():
+    def _render_index(initial_category=None):
         top_level, subs = build_menu()
         # Collect all unique filters from all providers
         all_filters = _collect_filters()
@@ -107,7 +108,22 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             version=config.version,
             config=config,
             filters=all_filters,
+            initial_category=initial_category,
         )
+
+    @app.route("/")
+    def index():
+        # ?cat=<key> opens the game straight into a category (shareable link).
+        cat = request.args.get("cat", "")
+        return _render_index(cat if registry.get(cat) else None)
+
+    @app.route("/<slug>")
+    def category_landing(slug):
+        # Pretty per-category landing pages, e.g. /food -> culture:food.
+        key = _category_slugs().get(slug)
+        if key is None:
+            abort(404)
+        return _render_index(key)
 
     @app.route("/about")
     def about():
@@ -205,6 +221,25 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         return jsonify({"status": "ok", "categories": len(registry.get_all())})
 
     return app
+
+
+def _category_slugs() -> dict[str, str]:
+    """Map shareable URL slugs to category keys, derived from the registry.
+
+    A category key's last ``:``-segment is its slug when that segment is unique
+    (``culture:food`` -> ``food``); the full dashed key is always available too
+    (``culture-food``), and is the *only* slug for segments that would collide
+    (e.g. several ``…:all`` categories, which all end in ``all``).
+    """
+    keys = list(registry.get_all())
+    last = {k: k.rsplit(":", 1)[-1] for k in keys}
+    counts = Counter(last.values())
+    slugs: dict[str, str] = {}
+    for k in keys:
+        if counts[last[k]] == 1:
+            slugs[last[k]] = k
+        slugs.setdefault(k.replace(":", "-"), k)
+    return slugs
 
 
 def _collect_filters() -> dict:

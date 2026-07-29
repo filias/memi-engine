@@ -134,3 +134,69 @@ def test_healthz(client):
     resp = client.get("/healthz")
     assert resp.status_code == 200
     assert resp.get_json()["status"] == "ok"
+
+
+# --- Shareable category landing pages ---------------------------------------
+
+
+def test_cat_query_param_sets_initial_category(client):
+    resp = client.get("/?cat=demo:items")
+    assert resp.status_code == 200
+    assert b'var INITIAL_CATEGORY = "demo:items";' in resp.data
+
+
+def test_cat_query_param_unknown_is_ignored(client):
+    resp = client.get("/?cat=nope:nope")
+    assert resp.status_code == 200
+    assert b"var INITIAL_CATEGORY = null;" in resp.data
+
+
+def test_plain_index_has_null_initial_category(client):
+    resp = client.get("/")
+    assert b"var INITIAL_CATEGORY = null;" in resp.data
+
+
+def test_slug_landing_resolves_to_key(client):
+    # demo:items -> last segment "items" is unique, so /items is the slug.
+    resp = client.get("/items")
+    assert resp.status_code == 200
+    assert b'var INITIAL_CATEGORY = "demo:items";' in resp.data
+
+
+def test_dashed_full_key_is_always_a_slug(client):
+    resp = client.get("/demo-items")
+    assert resp.status_code == 200
+    assert b'var INITIAL_CATEGORY = "demo:items";' in resp.data
+
+
+def test_unknown_slug_404(client):
+    assert client.get("/nope").status_code == 404
+
+
+def test_about_wins_over_slug_route(client):
+    # The static /about rule must take precedence over /<slug>.
+    assert client.get("/about").status_code == 200
+
+
+def test_colliding_last_segments_need_the_dashed_slug():
+    class Foo(CategoryProvider):
+        key = "foo:all"
+        items = ["x"]
+
+        def get_image(self, item):
+            return {"name": item, "image": "http://img.test/x.png"}
+
+    class Bar(CategoryProvider):
+        key = "bar:all"
+        items = ["y"]
+
+        def get_image(self, item):
+            return {"name": item, "image": "http://img.test/y.png"}
+
+    register(Foo())
+    register(Bar())
+    client = create_app(MemiConfig()).test_client()
+    # Bare "all" is ambiguous -> 404; each dashed full key still resolves.
+    assert client.get("/all").status_code == 404
+    assert b'"foo:all"' in client.get("/foo-all").data
+    assert b'"bar:all"' in client.get("/bar-all").data
