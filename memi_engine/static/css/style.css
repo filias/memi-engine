@@ -418,23 +418,13 @@ h1 a {
     z-index: 10;
 }
 
-.card .reveal-hint {
-    position: absolute;
-    top: 0.75rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--tag-bg);
-    color: #fff;
+.reveal-hint {
+    width: min(500px, 90vw);
+    text-align: right;
+    color: var(--subtle);
     font-size: 0.9rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-align: center;
-    padding: 0.45rem 1rem;
-    border-radius: 1rem;
-    max-width: calc(100% - 1.5rem);
-    z-index: 10;
-    pointer-events: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    margin-bottom: 0.5rem;
+    min-height: 1.2em;
 }
 
 #done-art {

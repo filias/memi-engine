@@ -178,6 +178,27 @@ def test_about_wins_over_slug_route(client):
     assert client.get("/about").status_code == 200
 
 
+def test_default_category_opens_on_home(client):
+    # StaticProvider (demo:items) is registered by the fixture; set it default.
+    app = create_app(MemiConfig(default_category="demo:items"))
+    resp = app.test_client().get("/")
+    assert b'var INITIAL_CATEGORY = "demo:items";' in resp.data
+
+
+def test_default_category_unknown_is_ignored(client):
+    app = create_app(MemiConfig(default_category="nope:nope"))
+    resp = app.test_client().get("/")
+    assert b"var INITIAL_CATEGORY = null;" in resp.data
+
+
+def test_explicit_cat_overrides_default(client):
+    app = create_app(MemiConfig(default_category="demo:items"))
+    # No provider for other:thing, so ?cat wins only when valid; here it's
+    # invalid, so we fall back to the default rather than to null.
+    resp = app.test_client().get("/?cat=bogus")
+    assert b'var INITIAL_CATEGORY = "demo:items";' in resp.data
+
+
 def test_colliding_last_segments_need_the_dashed_slug():
     class Foo(CategoryProvider):
         key = "foo:all"

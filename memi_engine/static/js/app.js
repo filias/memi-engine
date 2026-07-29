@@ -213,7 +213,7 @@ async function loadNew() {
     tag.style.display = 'none';
     tag.textContent = '';
     const revealHint = document.getElementById('reveal-hint');
-    if (revealHint) { revealHint.style.display = 'none'; revealHint.textContent = ''; }
+    if (revealHint) revealHint.textContent = '';
     const moreLink = document.getElementById('more-link');
     if (moreLink) { moreLink.style.display = 'none'; moreLink.href = ''; }
     document.getElementById('reveal-image').style.display = 'none';
@@ -257,7 +257,7 @@ async function loadNew() {
         lettersRevealed = 0;
         loaded = true;
         hint.textContent = '';
-        if (revealHint) { revealHint.textContent = LABELS.clickToReveal; revealHint.style.display = 'block'; }
+        if (revealHint) revealHint.textContent = LABELS.clickToReveal;
         updateFooters(data);
 
         const clueArea = document.getElementById('clue-area');
@@ -301,7 +301,7 @@ async function loadNew() {
             lettersRevealed = 0;
             loaded = true;
             hint.textContent = '';
-            if (revealHint) { revealHint.textContent = LABELS.clickToReveal; revealHint.style.display = 'block'; }
+            if (revealHint) revealHint.textContent = LABELS.clickToReveal;
             updateFooters(data);
 
             const clueArea = document.getElementById('clue-area');
@@ -404,7 +404,7 @@ function handleClick() {
         document.getElementById('hint').textContent = LABELS.clickForNew;
         document.getElementById('clue-area').style.display = 'none';
         const revealHintEl = document.getElementById('reveal-hint');
-        if (revealHintEl) revealHintEl.style.display = 'none';
+        if (revealHintEl) revealHintEl.textContent = '';
         if (currentTag) {
             showTag(document.getElementById('tag'));
         }

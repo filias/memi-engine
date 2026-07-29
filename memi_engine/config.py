@@ -21,6 +21,9 @@ class MemiConfig:
         footers: Dict of footer_id -> HTML content for attribution footers.
         related_sites: List of sibling memi games to link from the about page.
             Each item is {"name": ..., "url": ...}.
+        default_category: Category key to open into on the home page when no
+            ?cat= / slug is given, so visitors land on a live card instead of an
+            empty "pick a category" screen. None keeps the empty initial state.
         version: Version string shown in the footer (auto-detected from git).
     """
 
@@ -39,6 +42,7 @@ class MemiConfig:
     analytics_html: str | None = None
     footers: dict[str, str] = field(default_factory=dict)
     related_sites: list[dict[str, str]] = field(default_factory=list)
+    default_category: str | None = None
     version: str = ""
 
     # UI labels (for i18n)

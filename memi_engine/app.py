@@ -113,9 +113,14 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
     @app.route("/")
     def index():
-        # ?cat=<key> opens the game straight into a category (shareable link).
+        # ?cat=<key> opens the game straight into a category (shareable link);
+        # otherwise fall back to config.default_category so the home page lands
+        # on a live card instead of an empty "pick a category" screen.
         cat = request.args.get("cat", "")
-        return _render_index(cat if registry.get(cat) else None)
+        initial = cat if registry.get(cat) else None
+        if initial is None and registry.get(config.default_category or ""):
+            initial = config.default_category
+        return _render_index(initial)
 
     @app.route("/<slug>")
     def category_landing(slug):
