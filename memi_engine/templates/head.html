@@ -1,0 +1,28 @@
+{# Shared <head>. `page` comes from app.py and is per-URL: the home page, the
+   about page and each category landing page each get their own title,
+   description and canonical. Without that they are one page repeated, because
+   which category you are looking at is otherwise only a JavaScript variable. #}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }}</title>
+    <meta name="description" content="{{ page.description }}">
+    {# /food and /culture-food are the same category; the canonical picks one. #}
+    <link rel="canonical" href="{{ page.canonical }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config.title }}">
+    <meta property="og:title" content="{{ page.title }}">
+    <meta property="og:description" content="{{ page.description }}">
+    <meta property="og:url" content="{{ page.canonical }}">
+    {%- if page.og_image %}
+    <meta property="og:image" content="{{ page.og_image }}">
+    <meta name="twitter:card" content="summary_large_image">
+    {%- else %}
+    {# No image: the card still renders, just small. #}
+    <meta name="twitter:card" content="summary">
+    {%- endif %}
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('favicon') }}?v={{ version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ version }}">
+    <script>
+    var t = localStorage.getItem('memi-theme') || '{{ config.default_theme }}';
+    document.documentElement.dataset.theme = t;
+    </script>

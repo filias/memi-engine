@@ -68,3 +68,38 @@ class MemiConfig:
 
     # Wikipedia language edition for the default image / "know more" helpers.
     wikipedia_lang: str = "en"
+
+    # --- Search engines and link previews ---
+    #
+    # Every field here has a working default derived from the fields above, so
+    # a game gets per-page titles, descriptions and canonicals without setting
+    # any of them. See memi_engine/seo.py.
+
+    # Canonical origin, e.g. "https://pt.memi.games". Leave None to take it
+    # from the request (correct behind the usual Caddy reverse proxy, which
+    # sends X-Forwarded-Proto and X-Forwarded-Host). Set it — or the
+    # MEMI_SITE_URL env var — to pin canonical URLs to one host regardless of
+    # what a request claims.
+    site_url: str | None = None
+
+    # <html lang>. The engine is English; the games mostly are not, and a page
+    # that declares the wrong language is a page Google shows to the wrong
+    # people. Set it per instance ("pt", "sk", "ca").
+    html_lang: str = "en"
+
+    # Meta description for the home page. Empty falls back to the opening of
+    # about_html, which is already written in the instance's language.
+    description: str = ""
+
+    # Absolute URL of the link-preview image (og:image). None omits the tag;
+    # the card still renders from the title and description.
+    og_image: str | None = None
+
+    # Title patterns. Placeholders: {title}, {subtitle} and, for a category
+    # page, {category} — the category's label as the menu shows it.
+    home_title: str = "{title} — {subtitle}"
+    category_title: str = "{category} — {title}"
+
+    # Description pattern for a category page. {description} is the site
+    # description resolved above.
+    category_description: str = "{category} — {description}"

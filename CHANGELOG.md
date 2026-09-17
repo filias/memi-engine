@@ -6,6 +6,39 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-17
+
+### Added
+- **Per-page search metadata.** The home page, `/about` and every `/<slug>`
+  category landing page now carry their own `<title>`, `meta description`,
+  `link rel=canonical` and `og:`/`twitter:` tags. Until now they shared one
+  title and had no description or canonical at all: the active category is a
+  JavaScript variable, so to a crawler every URL on a site was the same page.
+  Titles and descriptions come from patterns on `MemiConfig` (`home_title`,
+  `category_title`, `category_description`, with `{category}`, `{title}`,
+  `{subtitle}`, `{count}` and `{description}`), and the description falls back
+  to the opening of `about_html` — already written in the instance's language —
+  so a game gets all of it without configuration. New module: `memi_engine.seo`.
+- **`/robots.txt` and `/sitemap.xml`.** The sitemap is built from the registry
+  and lists `/`, `/about` and one URL per category; a new provider appears in it
+  with no edit. `robots.txt` opens the site, excludes `/api/`, and points at the
+  sitemap. The category pages are reachable in the UI only by clicking a button,
+  so without the sitemap a crawler found the home page and stopped.
+- **`MemiConfig.html_lang`.** `<html lang>` was hardcoded `en` while most games
+  are not English. Defaults to `"en"`; set it per instance.
+- **`MemiConfig.site_url`** (or the `MEMI_SITE_URL` env var) to pin the origin
+  used for canonical, `og:` and sitemap URLs. Unset, it comes from the request:
+  the app now runs behind `ProxyFix` (one hop, proto and host only), so the URLs
+  it publishes are the public HTTPS ones rather than the proxy's inner hop.
+- **`MemiConfig.og_image`** for the link-preview image.
+
+### Changed
+- A category with a unique last segment is still reachable at both `/food` and
+  `/culture-food`, but the pair now canonicalises to the short form and only
+  that one is in the sitemap, so the two are never indexed as separate pages.
+- The about page title uses `label_about` instead of a hardcoded English
+  "About", and both templates share one `head.html`.
+
 ## [0.2.0] - 2026-07-29
 
 ### Added

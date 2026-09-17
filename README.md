@@ -14,7 +14,7 @@
 > between what you see and what you know. The answer is always one tap away — the
 > point is to reach for it yourself first.
 
-`memi-engine` lets you build your own [memi](https://memi.click) game — a
+`memi-engine` lets you build your own [memi](https://memi.games) game — a
 tap-to-reveal flashcard trainer — from a list of names and where to find their
 images.
 
@@ -186,6 +186,10 @@ Passed to `create_app`. Common fields:
 | `wikipedia_lang`  | `"en"`               | Wikipedia edition for default images / *know more* links. |
 | `related_sites`   | `[]`                 | Sibling games to link from the about page. |
 | `label_*`         | English strings      | UI labels (for localization).            |
+| `html_lang`       | `"en"`               | `<html lang>` — set it for a non-English game. |
+| `site_url`        | `None`               | Canonical origin; taken from the request if unset. |
+| `description`     | `""`                 | Home page meta description; falls back to `about_html`. |
+| `og_image`        | `None`               | Link-preview image (absolute URL).       |
 
 For a non-English game, set `wikipedia_lang` so the default image lookup and the
 *"know more"* link resolve against that language's Wikipedia (e.g. `"pt"`). It
@@ -204,6 +208,44 @@ app = create_app(config, instance_static="/path/to/static")
 # served at /static/... , falling back to the engine's static files
 ```
 
+## Search discoverability
+
+One game is served from many URLs: `/`, a `/<slug>` landing page per category,
+and `/about`. The category you are playing is a JavaScript variable, so nothing
+in the markup distinguishes those pages — left alone they are one page repeated,
+and a crawler indexes one and discards the rest.
+
+The engine gives each of them its own metadata, derived from what the instance
+already declares:
+
+| Page | Title | Description | Canonical |
+| --- | --- | --- | --- |
+| `/` | `{title} — {subtitle}` | `description`, else the opening of `about_html` | `/` |
+| `/<slug>` | `{category} — {title}` | `{category} — {description}` | the category's short slug |
+| `/about` | `{label_about} — {title}` | as the home page | `/about` |
+
+The title and description patterns are `home_title`, `category_title` and
+`category_description` on `MemiConfig`; a category pattern can also use
+`{count}`, the number of items in it. Defaults are punctuation only, so a
+localized game stays in its own language without touching them.
+
+Two more things fall out of this:
+
+- **`/robots.txt`** opens the site, excludes `/api/` (JSON a crawler can do
+  nothing with) and names the sitemap.
+- **`/sitemap.xml`** lists `/`, `/about` and every category — built from the
+  registry, so a new provider appears without an edit. A category whose last
+  segment is unique answers at both `/food` and `/culture-food`; only the short
+  one is listed, and the long one canonicalises to it.
+
+Canonical and `og:` URLs need the site's real origin. Behind a reverse proxy
+that sends `X-Forwarded-Proto` and `X-Forwarded-Host` (Caddy does by default)
+the engine works it out per request. Set `site_url` — or `MEMI_SITE_URL` — to
+pin it instead.
+
+Set **`html_lang`** per instance. It defaults to `"en"`, and a Portuguese game
+that tells Google it is English is a game shown to the wrong people.
+
 ## Deployment
 
 The app is a standard WSGI Flask app. For production, install the `server`
@@ -220,9 +262,10 @@ players report a bad card).
 
 ## Live examples
 
-Real games built on this engine: [memi](https://memi.click) ·
-[memi portugal](https://pt.memi.click) · [memi lisboa](https://lx.memi.click) ·
-[memi slovensko](https://sk.memi.click) · [memi US](https://us.memi.click).
+Real games built on this engine, all linked from
+[memi.games](https://memi.games): [memi](https://world.memi.games) ·
+[memi portugal](https://pt.memi.games) · [memi lisboa](https://lx.memi.games) ·
+[memi slovensko](https://sk.memi.games) · [memi US](https://us.memi.games).
 
 ## Development
 

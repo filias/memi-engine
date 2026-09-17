@@ -11,7 +11,6 @@ import logging
 import os
 import random
 import subprocess
-from collections import Counter
 
 from flask import (
     Flask,
@@ -22,8 +21,9 @@ from flask import (
     request,
     send_from_directory,
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-from memi_engine import images, registry
+from memi_engine import images, registry, seo
 from memi_engine.config import MemiConfig
 from memi_engine.menu import build_menu
 
@@ -53,6 +53,12 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         template_folder=engine_templates,
         static_folder=None,
     )
+
+    # Every memi site runs behind Caddy, which terminates HTTPS and proxies to
+    # gunicorn on localhost. Without this the app only ever sees the plain-HTTP
+    # inner hop, and would publish canonical and og: URLs on http://127.0.0.1.
+    # One hop, and only the two headers that decide the origin.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=0, x_proto=1, x_host=1)
 
     # Custom static file handler: instance first, then engine
     static_dirs = (
@@ -97,7 +103,26 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
     # --- Routes ---
 
-    def _render_index(initial_category=None):
+    def _site_url() -> str:
+        """Origin that canonical, og: and sitemap URLs are built on."""
+        pinned = config.site_url or os.environ.get("MEMI_SITE_URL")
+        return (pinned or request.url_root).rstrip("/")
+
+    def _page(meta: dict, path: str) -> dict:
+        """Head metadata for one page: what it is, and where it really lives."""
+        return {
+            "title": meta["title"],
+            "description": meta["description"],
+            "canonical": _site_url() + path,
+            "og_image": config.og_image,
+        }
+
+    def _category_page_meta(key: str) -> dict:
+        provider = registry.get(key)
+        count = len(provider.items) if provider else 0
+        return seo.category_meta(config, key, count)
+
+    def _render_index(initial_category=None, page=None):
         top_level, subs = build_menu()
         # Collect all unique filters from all providers
         all_filters = _collect_filters()
@@ -109,6 +134,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             config=config,
             filters=all_filters,
             initial_category=initial_category,
+            page=page or _page(seo.home_meta(config), "/"),
         )
 
     @app.route("/")
@@ -120,21 +146,74 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         initial = cat if registry.get(cat) else None
         if initial is None and registry.get(config.default_category or ""):
             initial = config.default_category
-        return _render_index(initial)
+        # `?cat=` is the same page as that category's own URL, so it points at
+        # it rather than competing with it. A bare `/` is the home page and
+        # canonicalises to itself, even when a default category is showing.
+        page = None
+        if cat and initial:
+            slug = seo.canonical_slugs(registry.get_all()).get(initial)
+            if slug:
+                page = _page(_category_page_meta(initial), f"/{slug}")
+        return _render_index(initial, page)
 
     @app.route("/<slug>")
     def category_landing(slug):
         # Pretty per-category landing pages, e.g. /food -> culture:food.
-        key = _category_slugs().get(slug)
+        key = seo.category_slugs(registry.get_all()).get(slug)
         if key is None:
             abort(404)
-        return _render_index(key)
+        # A category with a unique last segment answers at both /food and
+        # /culture-food. Both keep working; the canonical names the short one
+        # so the pair is never indexed as two pages.
+        canonical = seo.canonical_slugs(registry.get_all()).get(key, slug)
+        return _render_index(key, _page(_category_page_meta(key), f"/{canonical}"))
 
     @app.route("/about")
     def about():
         return render_template(
-            "about.html", version=config.version, config=config
+            "about.html",
+            version=config.version,
+            config=config,
+            page=_page(seo.about_meta(config), "/about"),
         )
+
+    @app.route("/robots.txt")
+    def robots_txt():
+        """Open the site to crawlers and point them at the sitemap.
+
+        The game data endpoints are excluded: they answer with JSON a crawler
+        can do nothing with, and /api/random is different on every request.
+        """
+        body = (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /api/\n"
+            "\n"
+            f"Sitemap: {_site_url()}/sitemap.xml\n"
+        )
+        return Response(body, mimetype="text/plain")
+
+    @app.route("/sitemap.xml")
+    def sitemap_xml():
+        """Every page worth indexing, built from the registry.
+
+        The category pages are reachable in the UI only by clicking a button,
+        so without this a crawler finds the home page and nothing else. A new
+        provider appears here the moment it registers — nothing to maintain.
+        """
+        base = _site_url()
+        paths = ["/", "/about"]
+        paths += [
+            f"/{slug}"
+            for slug in sorted(seo.canonical_slugs(registry.get_all()).values())
+        ]
+        urls = "".join(f"<url><loc>{base}{path}</loc></url>" for path in paths)
+        body = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            f"{urls}</urlset>"
+        )
+        return Response(body, mimetype="application/xml")
 
     @app.route("/api/random")
     def random_item():
@@ -226,25 +305,6 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         return jsonify({"status": "ok", "categories": len(registry.get_all())})
 
     return app
-
-
-def _category_slugs() -> dict[str, str]:
-    """Map shareable URL slugs to category keys, derived from the registry.
-
-    A category key's last ``:``-segment is its slug when that segment is unique
-    (``culture:food`` -> ``food``); the full dashed key is always available too
-    (``culture-food``), and is the *only* slug for segments that would collide
-    (e.g. several ``…:all`` categories, which all end in ``all``).
-    """
-    keys = list(registry.get_all())
-    last = {k: k.rsplit(":", 1)[-1] for k in keys}
-    counts = Counter(last.values())
-    slugs: dict[str, str] = {}
-    for k in keys:
-        if counts[last[k]] == 1:
-            slugs[last[k]] = k
-        slugs.setdefault(k.replace(":", "-"), k)
-    return slugs
 
 
 def _collect_filters() -> dict:
