@@ -66,6 +66,7 @@ function toggleSubmenu(parent) {
     selectedCategories = [];
     seenItems = [];
     menuStack = [];
+    syncUrl();
     renderSubmenu(subcategories[parent], parent);
 }
 
@@ -141,7 +142,20 @@ function closeSubmenu() {
 
 // --- Generic filter system ---
 
+// Keep the address bar on the shareable URL of what's being played: /<slug>
+// while exactly one category is selected, / otherwise. replaceState, so moving
+// between categories doesn't pile up back-button entries.
+function syncUrl() {
+    if (typeof CATEGORY_SLUGS === 'undefined' || !window.history.replaceState) return;
+    const slug = selectedCategories.length === 1 ? CATEGORY_SLUGS[selectedCategories[0]] : null;
+    const path = slug ? '/' + encodeURIComponent(slug) : '/';
+    if (window.location.pathname !== path || window.location.search) {
+        window.history.replaceState(null, '', path);
+    }
+}
+
 function updateFilters() {
+    syncUrl();
     for (const [filterName, filterInfo] of Object.entries(FILTER_CONFIG)) {
         const el = document.getElementById(filterName + '-filter');
         if (!el) continue;

@@ -101,6 +101,8 @@
     // Deep-link target: a category key when the page was opened via /<slug> or
     // ?cat=<key>, else null. app.js opens straight into it on load.
     var INITIAL_CATEGORY = {{ (initial_category or none) | tojson }};
+    // Each category's shareable path (/<slug>); the address bar follows the game.
+    var CATEGORY_SLUGS = {{ category_slugs | tojson }};
     </script>
     <script id="subcategories-data" type="application/json">{{ subcategories | tojson }}</script>
     <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>

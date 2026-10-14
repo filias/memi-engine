@@ -15,6 +15,7 @@ override for instances that want their own wording.
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections import Counter
 
 # Roughly where Google truncates the snippet. Not a hard rule on their side,
@@ -67,40 +68,79 @@ def category_label(key: str) -> str:
     return key.rsplit(":", 1)[-1]
 
 
+# Letters NFKD doesn't decompose into an ASCII base + accent.
+_ASCII_FOLD = str.maketrans(
+    {"ł": "l", "Ł": "L", "ø": "o", "Ø": "O", "ß": "ss", "đ": "d"}
+)
+_APOSTROPHES = re.compile(r"['’ʼ`]")
+_NON_SLUG = re.compile(r"[^a-z0-9]+")
+
+
+def slugify(text: str) -> str:
+    """URL-safe form of a category name: ``"marta’s tips"`` -> ``"martas-tips"``.
+
+    Lowercase ASCII letters and digits joined by dashes; accents are dropped
+    (``"monumentos históricos"`` -> ``"monumentos-historicos"``) and apostrophes
+    vanish rather than splitting the word. Empty when nothing ASCII is left
+    (a name in a non-Latin script), and the caller then keeps the raw name.
+    """
+    folded = unicodedata.normalize("NFKD", text.translate(_ASCII_FOLD))
+    ascii_text = folded.encode("ascii", "ignore").decode().lower()
+    return _NON_SLUG.sub("-", _APOSTROPHES.sub("", ascii_text)).strip("-")
+
+
+def _preferred_slugs(keys) -> dict[str, str]:
+    """The one slug each key is shared and indexed under.
+
+    The slugified last segment when no other key's last segment slugifies the
+    same (``culture:food`` -> ``food``), else the slugified full key
+    (``nature-all``). A name with nothing ASCII in it keeps its raw form.
+    """
+    def slug_or_raw(text):
+        return slugify(text) or text
+
+    short = {k: slug_or_raw(category_label(k)) for k in keys}
+    counts = Counter(short.values())
+    return {
+        k: short[k] if counts[short[k]] == 1 else slug_or_raw(k.replace(":", "-"))
+        for k in keys
+    }
+
+
 def category_slugs(keys) -> dict[str, str]:
     """Map every URL slug to its category key.
 
-    A key's last ``:``-segment is a slug when that segment is unique
-    (``culture:food`` -> ``food``); the full dashed key is always available too
-    (``culture-food``), and is the *only* slug for segments that would collide
-    (e.g. several ``…:all`` categories, which all end in ``all``).
+    Each key answers at its preferred slug (see :func:`canonical_slugs`) and,
+    so that links already shared keep working, at the raw forms earlier
+    versions used: the last segment when unique (``marta’s tips``) and the full
+    dashed key (``culture-food``). The raw forms canonicalise to the preferred
+    one, so the duplicates are never indexed.
     """
     keys = list(keys)
+    preferred = _preferred_slugs(keys)
     last = {k: category_label(k) for k in keys}
     counts = Counter(last.values())
     slugs: dict[str, str] = {}
     for k in keys:
+        slugs[preferred[k]] = k
+    for k in keys:
         if counts[last[k]] == 1:
-            slugs[last[k]] = k
+            slugs.setdefault(last[k], k)
         slugs.setdefault(k.replace(":", "-"), k)
+        slugs.setdefault(slugify(k.replace(":", "-")) or k, k)
     return slugs
 
 
 def canonical_slugs(keys) -> dict[str, str]:
     """Map each category key to the one slug that represents it.
 
-    The inverse of :func:`category_slugs`, and the reason it exists: a category
-    with a unique last segment is reachable at both ``/food`` and
-    ``/culture-food``. Both keep working — links to either are already out
-    there — but only the short one goes in the sitemap, and the long one
-    canonicalises to it, so the pair is never indexed as two pages.
+    The inverse of :func:`category_slugs`: a category answers at several
+    slugs (``/food`` and ``/culture-food``; ``/martas-tips`` and the raw
+    ``/marta’s tips``). All keep working — links to them are already out
+    there — but only this one goes in the sitemap and the address bar, and the
+    others canonicalise to it, so they are never indexed as separate pages.
     """
-    preferred: dict[str, str] = {}
-    for slug, key in category_slugs(keys).items():
-        current = preferred.get(key)
-        if current is None or len(slug) < len(current):
-            preferred[key] = slug
-    return preferred
+    return _preferred_slugs(list(keys))
 
 
 def site_description(config) -> str:

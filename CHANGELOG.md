@@ -6,6 +6,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-14
+
+### Changed
+- **Category URLs are plain ASCII slugs.** `/<slug>` used the raw category name,
+  so a name with a space, apostrophe, `&` or accent (`marta’s tips`, `road
+  signs`, `mestá`) gave a link that chat apps cut at the space or turned into
+  `%C3%A1`. Slugs are now lowercase ASCII words joined by dashes (`/martas-tips`,
+  `/road-signs`, `/mesta`) — `seo.slugify`. The old raw URLs keep working and
+  canonicalise to the new ones, so links already shared don't break. Names with
+  nothing ASCII in them (a non-Latin script) keep their raw slug.
+
+### Added
+- **The address bar follows the game.** Picking a category replaces the URL with
+  its shareable `/<slug>` (and with `/` when none, or several, are selected), so
+  the link to share is right there to copy. `replaceState`, not `pushState`:
+  switching categories doesn't fill the back button. The page gets the slugs as
+  `CATEGORY_SLUGS`.
+
 ## [0.4.1] - 2026-10-14
 
 ### Changed

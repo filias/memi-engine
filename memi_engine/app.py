@@ -136,6 +136,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             config=config,
             filters=all_filters,
             initial_category=initial_category,
+            category_slugs=seo.canonical_slugs(registry.get_all()),
             page=page or _page(seo.home_meta(config), "/"),
         )
 

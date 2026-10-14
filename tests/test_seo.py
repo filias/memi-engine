@@ -256,14 +256,48 @@ def test_colliding_last_segments_keep_the_dashed_slug():
     }
 
 
-def test_sitemap_and_canonical_percent_encode_slugs():
+def test_slugify_makes_names_url_safe():
+    assert seo.slugify("marta’s tips") == "martas-tips"
+    assert seo.slugify("us states") == "us-states"
+    assert seo.slugify("monumentos históricos") == "monumentos-historicos"
+    assert seo.slugify("Łąki") == "laki"
+    assert seo.slugify("日本") == ""
+
+
+def test_names_with_spaces_and_quotes_get_ascii_slugs():
     class Tips(Food):
         key = "marta’s tips"
 
     register(Tips())
     client = make_client()
     sitemap = client.get("/sitemap.xml").data.decode()
-    assert "/marta%E2%80%99s%20tips</loc>" in sitemap
-    assert "marta’s tips" not in sitemap
-    page = head_of(client, "/marta’s tips")
-    assert 'rel="canonical" href="http://localhost/marta%E2%80%99s%20tips"' in page
+    assert "<loc>http://localhost/martas-tips</loc>" in sitemap
+    assert "marta" not in sitemap.replace("martas-tips", "")
+    page = head_of(client, "/martas-tips")
+    assert '<link rel="canonical" href="http://localhost/martas-tips">' in page
+
+
+def test_old_raw_slug_still_works_and_canonicalises_to_the_ascii_one():
+    class Tips(Food):
+        key = "marta’s tips"
+
+    register(Tips())
+    client = make_client()
+    resp = client.get("/marta’s tips")
+    assert resp.status_code == 200
+    assert 'rel="canonical" href="http://localhost/martas-tips"' in resp.data.decode()
+
+
+def test_non_latin_names_keep_their_raw_slug():
+    class Japan(Food):
+        key = "日本"
+
+    register(Japan())
+    assert seo.canonical_slugs(["日本"]) == {"日本": "日本"}
+    assert make_client().get("/日本").status_code == 200
+
+
+def test_page_knows_every_category_slug(client):
+    page = client.get("/").data.decode()
+    assert "var CATEGORY_SLUGS = " in page
+    assert '"culture:food": "food"' in page
