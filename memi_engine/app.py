@@ -285,6 +285,11 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             if provider.light_bg:
                 result["light_bg"] = True
 
+            # Speaker button on reveal (any layout).
+            audio = provider.get_audio(item)
+            if audio:
+                result["audio"] = audio
+
             # Details panel (enriched layout only — classic never shows it, so
             # don't pay for whatever the provider does to build it).
             if config.layout == "enriched":

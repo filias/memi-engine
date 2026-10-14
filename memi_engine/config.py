@@ -70,6 +70,7 @@ class MemiConfig:
     label_related_sites: str = "more memi games"
     label_more: str = "know more"
     label_open_map: str = "open map"
+    label_listen: str = "listen"
     done_html: str = ""  # Custom HTML shown when all items are done
 
     # Favicon: background of the rounded square (default dark goldenrod)

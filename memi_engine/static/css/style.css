@@ -793,3 +793,32 @@ h1 a {
         padding-bottom: 5rem;
     }
 }
+
+/* --- Speaker button (providers with get_audio), shown on reveal --- */
+
+.speak-btn {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 20;
+    width: 3rem;
+    height: 3rem;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s;
+}
+
+.speak-btn:hover {
+    transform: scale(1.08);
+}
+
+.speak-btn[hidden] {
+    display: none;
+}

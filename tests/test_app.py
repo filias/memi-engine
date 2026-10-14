@@ -315,3 +315,54 @@ def test_enriched_panel_has_a_title_slot_above_the_area():
     client = create_app(MemiConfig(layout="enriched")).test_client()
     page = client.get("/").data.decode()
     assert page.index('id="details-title"') < page.index('id="details-area"')
+
+
+# --- Audio: speaker button on reveal ---
+
+
+class Spoken(CategoryProvider):
+    key = "demo:spoken"
+    items = ["thank you"]
+
+    def get_image(self, item):
+        return {"name": "dziękuję", "image": "http://img.test/card.svg"}
+
+    def get_audio(self, item):
+        return {
+            "text": "dziękuję", "lang": "pl-PL", "src": "/static/audio/dziekuje.mp3"
+        }
+
+
+def test_audio_passes_through_in_any_layout():
+    register(Spoken())
+    for layout in ("classic", "enriched"):
+        client = create_app(MemiConfig(layout=layout)).test_client()
+        data = client.get("/api/random?cats=demo:spoken").get_json()
+        assert data["audio"] == {
+            "text": "dziękuję", "lang": "pl-PL", "src": "/static/audio/dziekuje.mp3"
+        }
+
+
+def test_no_audio_key_without_get_audio(client):
+    assert "audio" not in client.get("/api/random?cats=demo:items").get_json()
+
+
+def test_aggregate_delegates_audio():
+    from memi_engine import AggregateProvider
+
+    class All(AggregateProvider):
+        key = "demo:all"
+
+    register(Spoken())
+    register(All())
+    client = create_app(MemiConfig()).test_client()
+    data = client.get("/api/random?cats=demo:all").get_json()
+    assert data["audio"]["lang"] == "pl-PL"
+
+
+def test_speaker_button_is_labelled_from_config():
+    register(Spoken())
+    client = create_app(MemiConfig(label_listen="posłuchaj")).test_client()
+    page = client.get("/").data.decode()
+    assert 'id="speak-btn"' in page
+    assert 'aria-label="posłuchaj"' in page

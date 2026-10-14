@@ -8,6 +8,8 @@ let currentTagStyle = '';
 let currentMoreUrl = '';
 let currentRevealImage = '';
 let currentDetails = null;
+let currentAudio = null;
+let playingAudio = null;
 let currentItem = '';
 let currentCats = '';
 let lettersRevealed = 0;
@@ -232,6 +234,8 @@ async function loadNew() {
     const moreLink = document.getElementById('more-link');
     if (moreLink) { moreLink.style.display = 'none'; moreLink.href = ''; }
     hideDetails();
+    stopSpeaking();
+    document.getElementById('speak-btn').hidden = true;
     document.getElementById('reveal-image').style.display = 'none';
     const doneArt2 = document.getElementById('done-art');
     if (doneArt2) doneArt2.style.display = 'none';
@@ -344,6 +348,7 @@ function setCurrent(data) {
     currentMoreUrl = data.url || '';
     currentRevealImage = data.reveal_image || '';
     currentDetails = data.details || null;
+    currentAudio = data.audio || null;
     currentItem = data.item || data.name;
     currentCats = selectedCategories.join(',');
 }
@@ -406,6 +411,56 @@ function showDetails(details) {
         mapLink.href = 'https://www.openstreetmap.org/?mlat=' + m.lat + '&mlon=' + m.lon +
             '#map=' + zoom + '/' + m.lat + '/' + m.lon;
     }
+}
+
+// --- Speaker button: a recording, or the browser's own voice as fallback ---
+
+const synth = window.speechSynthesis || null;
+// Chrome fills the voice list asynchronously; asking once warms it up so the
+// first tap already finds a matching voice.
+if (synth) synth.getVoices();
+
+function canSpeak(audio) {
+    return !!audio && (!!audio.src || (!!synth && !!audio.text));
+}
+
+function stopSpeaking() {
+    if (playingAudio) { playingAudio.pause(); playingAudio = null; }
+    if (synth) synth.cancel();
+}
+
+function speakText(audio) {
+    if (!synth || !audio.text) return;
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(audio.text);
+    if (audio.lang) {
+        utterance.lang = audio.lang;
+        // Prefer a voice for the language itself, so a phone set to English
+        // doesn't read Polish with English sounds.
+        const want = audio.lang.toLowerCase().split('-')[0];
+        const voice = synth.getVoices().find(v => v.lang.toLowerCase().replace('_', '-').split('-')[0] === want);
+        if (voice) utterance.voice = voice;
+    }
+    synth.speak(utterance);
+}
+
+function speak(event) {
+    // The button sits on the card, whose own click means "next card".
+    if (event) event.stopPropagation();
+    const audio = currentAudio;
+    if (!audio) return;
+    stopSpeaking();
+    if (!audio.src) { speakText(audio); return; }
+    const player = new Audio(audio.src);
+    playingAudio = player;
+    let fellBack = false;
+    const fallBack = () => {
+        if (fellBack || playingAudio !== player) return;
+        fellBack = true;
+        speakText(audio);
+    };
+    player.onerror = fallBack;
+    player.play().catch(fallBack);
 }
 
 function showTag(tagEl) {
@@ -494,6 +549,7 @@ function handleClick() {
         if (currentDetails) {
             showDetails(currentDetails);
         }
+        document.getElementById('speak-btn').hidden = !canSpeak(currentAudio);
         if (currentRevealImage) {
             const revealImg = document.getElementById('reveal-image');
             revealImg.src = currentRevealImage;

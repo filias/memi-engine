@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-14
+
+### Added
+- **Audio: a speaker button on reveal.** A provider's new
+  `get_audio(item)` returns `{"text", "lang", "src"}`; the card then shows a
+  round speaker button once revealed (any layout). It plays the recording at
+  `src` and falls back to the browser's speech synthesis of `text` in `lang`
+  when there is no recording, or when it fails to play (Chromium can't decode
+  the AAC in phone voice memos, for one). The browser voice is picked by
+  language, so a phone set to English still reads Polish with a Polish voice.
+  Tapping the button doesn't advance the card; loading the next card stops any
+  playback. `AggregateProvider` delegates it; the label is `label_listen`.
+
 ## [0.4.2] - 2026-10-14
 
 ### Changed

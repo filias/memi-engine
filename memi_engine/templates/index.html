@@ -51,6 +51,9 @@
         <div class="answer" id="answer"></div>
         <div class="tag" id="tag" style="display:none"></div>
         <img class="reveal-image" id="reveal-image" alt="">
+        <button class="speak-btn" id="speak-btn" type="button" hidden onclick="speak(event)" aria-label="{{ config.label_listen }}" title="{{ config.label_listen }}">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"/></svg>
+        </button>
         {% if config.done_html %}
         <div id="done-art" style="display:none">
             {{ config.done_html | safe }}

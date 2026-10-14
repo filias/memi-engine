@@ -78,6 +78,19 @@ class CategoryProvider:
         """
         return None
 
+    def get_audio(self, item: str) -> dict | None:
+        """Return how to say the answer aloud, or None for no speaker button.
+
+        ::
+
+            {"text": "dziękuję", "lang": "pl-PL", "src": "/static/audio/dziekuje.mp3"}
+
+        On reveal the card shows a speaker button. It plays ``src`` when given
+        and falls back to the browser's speech synthesis of ``text`` in
+        ``lang`` (a BCP 47 tag) when there is no recording or it fails to play.
+        """
+        return None
+
 
 class AggregateProvider(CategoryProvider):
     """An "all" provider whose contents are the union of its sibling providers.
@@ -149,3 +162,7 @@ class AggregateProvider(CategoryProvider):
     def get_details(self, item: str) -> dict | None:
         owner = self._owner(item)
         return owner.get_details(item) if owner else None
+
+    def get_audio(self, item: str) -> dict | None:
+        owner = self._owner(item)
+        return owner.get_audio(item) if owner else None
