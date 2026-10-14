@@ -221,3 +221,90 @@ def test_colliding_last_segments_need_the_dashed_slug():
     assert client.get("/all").status_code == 404
     assert b'"foo:all"' in client.get("/foo-all").data
     assert b'"bar:all"' in client.get("/bar-all").data
+
+
+# --- Layouts: classic (default) and enriched ---
+
+
+class Detailed(CategoryProvider):
+    key = "demo:detailed"
+    items = ["Hevre"]
+
+    def get_image(self, item):
+        return {"name": item, "image": "http://img.test/hevre.png"}
+
+    def get_details(self, item):
+        return {
+            "text": "A bar in an old prayer house.",
+            "area": {"name": "Kazimierz", "url": "https://example.test/kazimierz"},
+            "map": {"lat": 50.05, "lon": 19.94},
+        }
+
+
+def test_classic_layout_omits_details():
+    register(Detailed())
+    client = create_app(MemiConfig()).test_client()
+    assert "details" not in client.get("/api/random?cats=demo:detailed").get_json()
+    page = client.get("/").data.decode()
+    assert 'class="layout-classic"' in page
+    assert 'id="details"' not in page
+
+
+def test_enriched_layout_passes_details_through():
+    register(Detailed())
+    client = create_app(MemiConfig(layout="enriched")).test_client()
+    data = client.get("/api/random?cats=demo:detailed").get_json()
+    assert data["details"]["area"]["name"] == "Kazimierz"
+    assert data["details"]["map"] == {"lat": 50.05, "lon": 19.94}
+    page = client.get("/").data.decode()
+    assert 'class="layout-enriched"' in page
+    assert 'id="details"' in page
+
+
+def test_enriched_layout_without_details_sends_none(client):
+    # StaticProvider keeps the base get_details -> None: no empty key either.
+    register(StaticProvider())
+    enriched = create_app(MemiConfig(layout="enriched")).test_client()
+    assert "details" not in enriched.get("/api/random?cats=demo:items").get_json()
+
+
+def test_aggregate_delegates_details():
+    from memi_engine import AggregateProvider
+
+    class All(AggregateProvider):
+        key = "demo:all"
+
+    register(Detailed())
+    register(All())
+    client = create_app(MemiConfig(layout="enriched")).test_client()
+    data = client.get("/api/random?cats=demo:all").get_json()
+    assert data["details"]["text"] == "A bar in an old prayer house."
+
+
+def test_unknown_layout_is_rejected():
+    with pytest.raises(ValueError):
+        MemiConfig(layout="fancy")
+
+
+# --- Menu handlers survive quotes in category names ---
+
+
+def test_apostrophe_in_key_cannot_break_the_onclick():
+    import html
+    import re
+
+    class Tips(StaticProvider):
+        key = "marta's tips"
+
+    class Group(StaticProvider):
+        key = "it's:fun"
+
+    register(Tips())
+    register(Group())
+    page = create_app(MemiConfig()).test_client().get("/").data.decode()
+    handlers = [html.unescape(h) for h in re.findall(r"onclick='([^']*)'", page)]
+    # Inside the single-quoted attribute the apostrophe is a JSON ' escape,
+    # so it can neither close the attribute nor the JS string.
+    select = 'selectCategory("marta\\u0027s tips"); this.classList.add("active")'
+    assert select in handlers
+    assert 'toggleSubmenu("it\\u0027s")' in handlers

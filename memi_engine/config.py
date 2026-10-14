@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+LAYOUTS = ("classic", "enriched")
+
 
 @dataclass
 class MemiConfig:
@@ -24,6 +26,11 @@ class MemiConfig:
         default_category: Category key to open into on the home page when no
             ?cat= / slug is given, so visitors land on a live card instead of an
             empty "pick a category" screen. None keeps the empty initial state.
+        layout: Card layout. ``"classic"`` is the original single-column game.
+            ``"enriched"`` adds a details panel beside the card (below it on
+            phones) for providers that implement ``get_details`` — longer text,
+            an area link and a map — and makes "know more" a prominent button,
+            pinned to the bottom of the screen on phones.
         version: Version string shown in the footer (auto-detected from git).
     """
 
@@ -43,6 +50,7 @@ class MemiConfig:
     footers: dict[str, str] = field(default_factory=dict)
     related_sites: list[dict[str, str]] = field(default_factory=list)
     default_category: str | None = None
+    layout: str = "classic"  # "classic" or "enriched"
     version: str = ""
 
     # UI labels (for i18n)
@@ -61,6 +69,7 @@ class MemiConfig:
     label_back: str = "back to playing"
     label_related_sites: str = "more memi games"
     label_more: str = "know more"
+    label_open_map: str = "open map"
     done_html: str = ""  # Custom HTML shown when all items are done
 
     # Favicon: background of the rounded square (default dark goldenrod)
@@ -103,3 +112,9 @@ class MemiConfig:
     # Description pattern for a category page. {description} is the site
     # description resolved above.
     category_description: str = "{category} — {description}"
+
+    def __post_init__(self) -> None:
+        if self.layout not in LAYOUTS:
+            raise ValueError(
+                f"layout must be one of {', '.join(LAYOUTS)}, got {self.layout!r}"
+            )

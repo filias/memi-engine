@@ -254,3 +254,16 @@ def test_colliding_last_segments_keep_the_dashed_slug():
         "nature:all": "nature-all",
         "culture:food": "food",
     }
+
+
+def test_sitemap_and_canonical_percent_encode_slugs():
+    class Tips(Food):
+        key = "marta’s tips"
+
+    register(Tips())
+    client = make_client()
+    sitemap = client.get("/sitemap.xml").data.decode()
+    assert "/marta%E2%80%99s%20tips</loc>" in sitemap
+    assert "marta’s tips" not in sitemap
+    page = head_of(client, "/marta’s tips")
+    assert 'rel="canonical" href="http://localhost/marta%E2%80%99s%20tips"' in page

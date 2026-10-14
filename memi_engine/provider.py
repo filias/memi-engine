@@ -61,6 +61,23 @@ class CategoryProvider:
         """Return a clue shown before reveal (e.g. country name), or None."""
         return None
 
+    def get_details(self, item: str) -> dict | None:
+        """Return extra content for the enriched layout's details panel, or None.
+
+        Only called when the game uses ``MemiConfig(layout="enriched")``. Every
+        key is optional::
+
+            {
+                "text": "Longer description; blank lines start a paragraph.",
+                "area": {"name": "Kazimierz", "url": "https://…"},
+                "map": {"lat": 50.0513, "lon": 19.9465, "zoom": 17},
+            }
+
+        ``map`` shows an OpenStreetMap view pinned at ``lat``/``lon``; ``zoom``
+        defaults to 17 (street level).
+        """
+        return None
+
 
 class AggregateProvider(CategoryProvider):
     """An "all" provider whose contents are the union of its sibling providers.
@@ -128,3 +145,7 @@ class AggregateProvider(CategoryProvider):
     def get_clue(self, item: str) -> str | None:
         owner = self._owner(item)
         return owner.get_clue(item) if owner else None
+
+    def get_details(self, item: str) -> dict | None:
+        owner = self._owner(item)
+        return owner.get_details(item) if owner else None

@@ -23,3 +23,7 @@ def test_themes_are_independent_per_instance():
     b = MemiConfig()
     a.themes.append("custom")
     assert "custom" not in b.themes
+
+
+def test_layout_defaults_to_classic():
+    assert MemiConfig().layout == "classic"

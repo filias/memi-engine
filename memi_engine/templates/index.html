@@ -3,11 +3,11 @@
 <head>
     {% include "head.html" %}
 </head>
-<body>
+<body class="layout-{{ config.layout }}">
     <div class="theme-picker">
         <span class="theme-label">{{ config.label_theme }}</span>
         {% for theme in config.themes %}
-        <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick="setTheme('{{ theme }}')"></div>
+        <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick='setTheme({{ theme | tojson }})'></div>
         {% endfor %}
     </div>
     <div class="top-right">
@@ -22,9 +22,9 @@
     <div class="categories" id="main-categories">
         {% for item in top_level %}
         {% if item.has_submenu %}
-        <button onclick="toggleSubmenu('{{ item.label }}')">{{ item.label }}</button>
+        <button onclick='toggleSubmenu({{ item.label | tojson }})'>{{ item.label }}</button>
         {% else %}
-        <button onclick="selectCategory('{{ item.key }}'); this.classList.add('active')">{{ item.label }}</button>
+        <button onclick='selectCategory({{ item.key | tojson }}); this.classList.add("active")'>{{ item.label }}</button>
         {% endif %}
         {% endfor %}
     </div>
@@ -37,12 +37,13 @@
     {% for filter_name, filter_info in filters.items() %}
     <div class="continent-filter" id="{{ filter_name }}-filter">
         {% for option in filter_info.options %}
-        <button onclick="toggleFilter('{{ filter_name }}', '{{ option }}', this)">{{ option }}</button>
+        <button onclick='toggleFilter({{ filter_name | tojson }}, {{ option | tojson }}, this)'>{{ option }}</button>
         {% endfor %}
     </div>
     {% endfor %}
 
     <div class="reveal-hint" id="reveal-hint"></div>
+    <div class="stage">
     <div class="card" id="card" onclick="handleClick()">
         <span class="loading" id="status">{{ config.label_pick_category }}</span>
         <img id="image" style="display:none" alt="">
@@ -55,6 +56,15 @@
             {{ config.done_html | safe }}
         </div>
         {% endif %}
+    </div>
+    {% if config.layout == "enriched" %}
+    <aside class="details" id="details" hidden>
+        <a class="details-area" id="details-area" target="_blank" rel="noopener" hidden></a>
+        <p class="details-text" id="details-text" hidden></p>
+        <div class="details-map" id="details-map" hidden></div>
+        <a class="details-map-link" id="details-map-link" target="_blank" rel="noopener" hidden>{{ config.label_open_map }} &nearr;</a>
+    </aside>
+    {% endif %}
     </div>
     <p class="hint" id="hint"></p>
     <div style="display:flex; align-items:center; justify-content:center; gap:0.75rem; margin-top:1rem;">

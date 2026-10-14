@@ -7,6 +7,7 @@ let currentTag = '';
 let currentTagStyle = '';
 let currentMoreUrl = '';
 let currentRevealImage = '';
+let currentDetails = null;
 let currentItem = '';
 let currentCats = '';
 let lettersRevealed = 0;
@@ -216,6 +217,7 @@ async function loadNew() {
     if (revealHint) revealHint.textContent = '';
     const moreLink = document.getElementById('more-link');
     if (moreLink) { moreLink.style.display = 'none'; moreLink.href = ''; }
+    hideDetails();
     document.getElementById('reveal-image').style.display = 'none';
     const doneArt2 = document.getElementById('done-art');
     if (doneArt2) doneArt2.style.display = 'none';
@@ -247,13 +249,7 @@ async function loadNew() {
         if (data.light_bg) card.classList.add('light-bg');
         clue.style.display = 'none';
         if (data.clue) { clue.textContent = data.clue; clue.style.display = 'block'; }
-        currentName = data.name;
-        currentTag = data.tag || '';
-        currentTagStyle = data.tag_style || '';
-        currentMoreUrl = data.url || '';
-        currentRevealImage = data.reveal_image || '';
-        currentItem = data.item || data.name;
-        currentCats = selectedCategories.join(',');
+        setCurrent(data);
         lettersRevealed = 0;
         loaded = true;
         hint.textContent = '';
@@ -292,12 +288,7 @@ async function loadNew() {
                 clue.textContent = data.clue;
                 clue.style.display = 'block';
             }
-            currentName = data.name;
-            currentTag = data.tag || '';
-            currentMoreUrl = data.url || '';
-            currentRevealImage = data.reveal_image || '';
-            currentItem = data.item || data.name;
-            currentCats = selectedCategories.join(',');
+            setCurrent(data);
             lettersRevealed = 0;
             loaded = true;
             hint.textContent = '';
@@ -327,6 +318,77 @@ async function loadNew() {
     } else {
         status.textContent = LABELS.allDone;
         status.className = 'loading';
+    }
+}
+
+// Remember the loaded card's answer-side data until it is revealed. Both load
+// paths (prefetched and fetched) go through here so they can't drift apart.
+function setCurrent(data) {
+    currentName = data.name;
+    currentTag = data.tag || '';
+    currentTagStyle = data.tag_style || '';
+    currentMoreUrl = data.url || '';
+    currentRevealImage = data.reveal_image || '';
+    currentDetails = data.details || null;
+    currentItem = data.item || data.name;
+    currentCats = selectedCategories.join(',');
+}
+
+// --- Details panel (layout="enriched" only; absent from the classic page) ---
+
+function hideDetails() {
+    const panel = document.getElementById('details');
+    if (!panel) return;
+    panel.hidden = true;
+    // Drop the map iframe so a hidden panel never keeps loading tiles.
+    document.getElementById('details-map').innerHTML = '';
+}
+
+// OpenStreetMap embed centred on lat/lon. The embed takes a bounding box, so
+// derive one from the zoom level and the map box's size (Web Mercator: the
+// world is 256 * 2^zoom px wide, and a degree of latitude is 1/cos(lat) taller).
+function osmEmbedUrl(lat, lon, zoom, width, height) {
+    const degPerPx = 360 / (256 * Math.pow(2, zoom));
+    const dLon = (degPerPx * width) / 2;
+    const dLat = (degPerPx * height * Math.cos(lat * Math.PI / 180)) / 2;
+    const bbox = [lon - dLon, lat - dLat, lon + dLon, lat + dLat].map(n => n.toFixed(6)).join(',');
+    return 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox +
+        '&layer=mapnik&marker=' + lat + ',' + lon;
+}
+
+function showDetails(details) {
+    const panel = document.getElementById('details');
+    if (!panel || !details) return;
+    const area = document.getElementById('details-area');
+    const text = document.getElementById('details-text');
+    const map = document.getElementById('details-map');
+    const mapLink = document.getElementById('details-map-link');
+
+    area.hidden = !(details.area && details.area.name);
+    if (!area.hidden) {
+        area.textContent = details.area.name;
+        if (details.area.url) area.href = details.area.url;
+        else area.removeAttribute('href');
+    }
+
+    text.hidden = !details.text;
+    text.textContent = details.text || '';
+
+    const m = details.map;
+    const hasMap = m && typeof m.lat === 'number' && typeof m.lon === 'number';
+    map.hidden = mapLink.hidden = !hasMap;
+    // Show the panel before sizing the map so its box has real dimensions.
+    panel.hidden = area.hidden && text.hidden && !hasMap;
+    if (hasMap) {
+        const zoom = m.zoom || 17;
+        const iframe = document.createElement('iframe');
+        iframe.title = details.area && details.area.name ? details.area.name : 'map';
+        iframe.loading = 'lazy';
+        iframe.src = osmEmbedUrl(m.lat, m.lon, zoom, map.clientWidth || 320, map.clientHeight || 240);
+        map.innerHTML = '';
+        map.appendChild(iframe);
+        mapLink.href = 'https://www.openstreetmap.org/?mlat=' + m.lat + '&mlon=' + m.lon +
+            '#map=' + zoom + '/' + m.lat + '/' + m.lon;
     }
 }
 
@@ -412,6 +474,9 @@ function handleClick() {
             const moreLink = document.getElementById('more-link');
             moreLink.href = currentMoreUrl;
             moreLink.style.display = 'inline-block';
+        }
+        if (currentDetails) {
+            showDetails(currentDetails);
         }
         if (currentRevealImage) {
             const revealImg = document.getElementById('reveal-image');

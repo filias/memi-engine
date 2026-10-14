@@ -6,6 +6,35 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-14
+
+### Added
+- **Two layouts: `MemiConfig.layout = "classic" | "enriched"`.** `"classic"`
+  (the default) is the game exactly as before, so existing instances don't
+  change. `"enriched"` adds:
+  - a **details panel** that appears on reveal, beside the card on wide screens
+    (≥1200px, hanging off the card so the card never shifts) and below it
+    otherwise. It shows a provider's longer text, a linked area name, and an
+    OpenStreetMap view pinned on the item, with an "open map" link
+    (`label_open_map`);
+  - a prominent **"know more"** button (an accent pill instead of grey text).
+    On phones it is pinned to the bottom of the screen while showing: the square
+    card fills the width and used to push it below the fold.
+- **`CategoryProvider.get_details(item)`** feeds the panel:
+  `{"text", "area": {"name", "url"}, "map": {"lat", "lon", "zoom"}}`, every key
+  optional. It is only called in the enriched layout; `AggregateProvider`
+  delegates it to the item's owner.
+
+### Fixed
+- Category names with an apostrophe (`"marta's tips"`) broke their menu button:
+  keys were pasted raw into `onclick="selectCategory('…')"`, closing the JS
+  string early, so clicking did nothing. Keys, submenu labels, filter values and
+  theme names are now JSON-encoded into the handlers.
+- Sitemap `<loc>` and canonical URLs are percent-encoded (and XML-escaped), so a
+  category with a space or non-ASCII character in its name gets a valid URL.
+- A freshly fetched card (as opposed to a prefetched one) didn't reset the tag
+  style, so it could inherit the previous card's `plain`/`scientific` styling.
+
 ## [0.3.0] - 2026-09-17
 
 ### Added

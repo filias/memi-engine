@@ -11,6 +11,8 @@ import logging
 import os
 import random
 import subprocess
+from urllib.parse import quote
+from xml.sax.saxutils import escape
 
 from flask import (
     Flask,
@@ -113,7 +115,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         return {
             "title": meta["title"],
             "description": meta["description"],
-            "canonical": _site_url() + path,
+            "canonical": _site_url() + quote(path),
             "og_image": config.og_image,
         }
 
@@ -207,7 +209,9 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             f"/{slug}"
             for slug in sorted(seo.canonical_slugs(registry.get_all()).values())
         ]
-        urls = "".join(f"<url><loc>{base}{path}</loc></url>" for path in paths)
+        urls = "".join(
+            f"<url><loc>{escape(base + quote(path))}</loc></url>" for path in paths
+        )
         body = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -279,6 +283,13 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
             if provider.light_bg:
                 result["light_bg"] = True
+
+            # Details panel (enriched layout only — classic never shows it, so
+            # don't pay for whatever the provider does to build it).
+            if config.layout == "enriched":
+                details = provider.get_details(item)
+                if details:
+                    result["details"] = details
 
             # Footers
             if provider.footers:
