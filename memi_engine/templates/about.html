@@ -7,7 +7,7 @@
     <div class="theme-picker">
         <span class="theme-label">theme</span>
         {% for theme in config.themes %}
-        <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick="setTheme('{{ theme }}')"></div>
+        <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick='setTheme({{ theme | tojson }})'></div>
         {% endfor %}
     </div>
     <h1><a href="/">{{ config.title }}</a></h1>

@@ -366,3 +366,12 @@ def test_speaker_button_is_labelled_from_config():
     page = client.get("/").data.decode()
     assert 'id="speak-btn"' in page
     assert 'aria-label="posłuchaj"' in page
+
+
+def test_about_links_are_styled_for_every_theme():
+    from pathlib import Path
+
+    import memi_engine
+
+    css = (Path(memi_engine.__file__).parent / "static/css/style.css").read_text()
+    assert ".content p a:not(.back-link)," in css and "color: var(--accent);" in css

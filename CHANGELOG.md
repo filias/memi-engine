@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-14
+
+### Fixed
+- Links in the about copy were the browser's default dark blue, invisible on
+  the dark theme. They now take the theme's accent colour, underlined; the
+  related-sites pills and the back link keep their own styles.
+- The about page's theme dots pasted theme names raw into their `onclick`
+  handlers; they are JSON-encoded now, as on the game page since 0.4.0.
+
 ## [0.5.0] - 2026-10-14
 
 ### Added
