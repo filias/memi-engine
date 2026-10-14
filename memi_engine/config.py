@@ -71,6 +71,7 @@ class MemiConfig:
     label_more: str = "know more"
     label_open_map: str = "open map"
     label_listen: str = "listen"
+    label_all: str = "all"  # submenu chip that plays every category in the group
     done_html: str = ""  # Custom HTML shown when all items are done
 
     # Favicon: background of the rounded square (default dark goldenrod)

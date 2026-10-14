@@ -6,6 +6,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-14
+
+### Changed
+- **Submenu categories are one at a time.** Tapping a category inside a group
+  used to add it to the ones already playing, which most people read as
+  switching; now it switches, like the top-level buttons, and tapping the one
+  already playing does nothing. Groups that were one-at-a-time already (countries,
+  movies, …) behave as before, minus deselect-on-second-tap.
+
+### Added
+- **An "all" chip** at the end of each submenu plays every category of that
+  level together (dashed until chosen). It isn't added to one-at-a-time groups,
+  to a level with a single category, or where the game already registers its own
+  `…:all` category. Label: `label_all`.
+
 ## [0.5.1] - 2026-10-14
 
 ### Fixed

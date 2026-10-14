@@ -99,6 +99,7 @@
         allDone: {{ config.label_all_done | tojson }},
         clickToReveal: {{ config.label_click_to_reveal | tojson }},
         clickForNew: {{ config.label_click_for_new | tojson }},
+        all: {{ config.label_all | tojson }},
     };
     var FILTER_CONFIG = {{ filters | tojson }};
     // Deep-link target: a category key when the page was opened via /<slug> or

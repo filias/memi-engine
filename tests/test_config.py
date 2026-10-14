@@ -27,3 +27,17 @@ def test_themes_are_independent_per_instance():
 
 def test_layout_defaults_to_classic():
     assert MemiConfig().layout == "classic"
+
+
+def test_all_chip_label_is_configurable():
+    from memi_engine import create_app, register
+    from memi_engine.provider import CategoryProvider
+
+    class Demo(CategoryProvider):
+        key = "demo:items"
+        items = ["a"]
+
+    register(Demo())
+    client = create_app(MemiConfig(label_all="wszystko")).test_client()
+    page = client.get("/").data.decode()
+    assert 'all: "wszystko"' in page

@@ -43,6 +43,7 @@ function renderSubmenu(items, group) {
     currentGroup = group;
 
     buttons.innerHTML = '';
+    const leafKeys = [];
     for (const sub of items) {
         const btn = document.createElement('button');
         btn.textContent = sub.label;
@@ -55,9 +56,22 @@ function renderSubmenu(items, group) {
             };
         } else {
             btn.dataset.key = sub.key;
-            btn.onclick = function() { toggleSubcategory(sub.key, this); };
+            btn.onclick = function() { selectSubcategory(sub.key, this); };
+            leafKeys.push(sub.key);
         }
         buttons.appendChild(btn);
+    }
+
+    // "all": play every category of this level together. Not for one-at-a-time
+    // groups, not for a single category, and not when the game already has its
+    // own "…:all" category here.
+    const ownAll = leafKeys.some(k => k.split(':').pop() === 'all');
+    if (leafKeys.length > 1 && !ownAll && !singleSelectGroups.includes(group)) {
+        const allBtn = document.createElement('button');
+        allBtn.className = 'all-btn';
+        allBtn.textContent = LABELS.all;
+        allBtn.onclick = function() { selectAllSubcategories(leafKeys, this); };
+        buttons.appendChild(allBtn);
     }
 
     main.style.display = 'none';
@@ -72,33 +86,29 @@ function toggleSubmenu(parent) {
     renderSubmenu(subcategories[parent], parent);
 }
 
-function toggleSubcategory(key, btn) {
-    const isSingleSelect = singleSelectGroups.includes(currentGroup);
-    const wasEmpty = selectedCategories.length === 0;
-    const idx = selectedCategories.indexOf(key);
+function markSubmenuActive(btn) {
+    document.querySelectorAll('#submenu-buttons button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
 
-    if (isSingleSelect) {
-        document.querySelectorAll('#submenu-buttons button').forEach(b => b.classList.remove('active'));
-        if (idx !== -1) {
-            selectedCategories = [];
-            return;
-        }
-        selectedCategories = [key];
-        btn.classList.add('active');
-    } else {
-        if (idx === -1) {
-            selectedCategories.push(key);
-            btn.classList.add('active');
-        } else {
-            selectedCategories.splice(idx, 1);
-            btn.classList.remove('active');
-        }
-    }
-
+// A tap switches to that category: one at a time, like the top-level buttons.
+// Tapping the one already playing changes nothing.
+function selectSubcategory(key, btn) {
+    if (selectedCategories.length === 1 && selectedCategories[0] === key) return;
+    selectedCategories = [key];
+    markSubmenuActive(btn);
     updateFilters();
-    if (selectedCategories.length > 0 && (wasEmpty || isSingleSelect)) {
-        loadNew();
-    }
+    loadNew();
+}
+
+function selectAllSubcategories(keys, btn) {
+    const same = selectedCategories.length === keys.length &&
+        keys.every(k => selectedCategories.includes(k));
+    if (same) return;
+    selectedCategories = keys.slice();
+    markSubmenuActive(btn);
+    updateFilters();
+    loadNew();
 }
 
 function toggleClueMode() {
