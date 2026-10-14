@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-14
+
+### Changed
+- The enriched layout's details panel is headed by the card's name, with the
+  area underneath it. It used to open with the area, which read as the panel's
+  title ("KAZIMIERZ" above Hevre's notes); panels with only a map now get a
+  title too.
+
 ## [0.4.0] - 2026-10-14
 
 ### Added

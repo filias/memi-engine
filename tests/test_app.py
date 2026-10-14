@@ -308,3 +308,10 @@ def test_apostrophe_in_key_cannot_break_the_onclick():
     select = 'selectCategory("marta\\u0027s tips"); this.classList.add("active")'
     assert select in handlers
     assert 'toggleSubmenu("it\\u0027s")' in handlers
+
+
+def test_enriched_panel_has_a_title_slot_above_the_area():
+    register(Detailed())
+    client = create_app(MemiConfig(layout="enriched")).test_client()
+    page = client.get("/").data.decode()
+    assert page.index('id="details-title"') < page.index('id="details-area"')

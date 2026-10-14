@@ -359,6 +359,8 @@ function osmEmbedUrl(lat, lon, zoom, width, height) {
 function showDetails(details) {
     const panel = document.getElementById('details');
     if (!panel || !details) return;
+    // Headed by the card's answer; the area (if any) sits underneath it.
+    document.getElementById('details-title').textContent = currentName;
     const area = document.getElementById('details-area');
     const text = document.getElementById('details-text');
     const map = document.getElementById('details-map');
