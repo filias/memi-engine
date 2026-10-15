@@ -117,7 +117,7 @@ class decorator on the definition.
 | `get_clue(item)`       | A clue shown *before* reveal, or `None`.                      |
 | `get_details(item)`    | `{"text", "area": {"name", "url"}, "map": {"lat", "lon", "zoom"}}` for the enriched layout's panel, or `None`. Default: the Wikipedia article's intro (+ map if `map_zoom`). |
 | `get_wikipedia_title(item)` | `(lang, title)` of the article the panel describes. Default: from the `url` of `get_image`. |
-| `get_audio(item)`      | `{"text", "lang", "src"}` for a speaker button on reveal, or `None`. |
+| `get_audio(item)`      | `{"text", "lang", "src"}` for a speaker button on reveal (add `"before_reveal": True` to show it before), or `None`. |
 
 **The details panel.** With `MemiConfig(layout="enriched")` a panel opens beside
 the card on reveal. By default it holds the opening paragraph of the card's

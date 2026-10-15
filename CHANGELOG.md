@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-15
+
+### Added
+- **Audio before the reveal.** `get_audio` can return `"before_reveal": True`
+  when hearing it is part of the question (listen, then name it); the speaker
+  button then shows as soon as the card loads instead of after the reveal.
+
+### Fixed
+- Details panel intros kept English pronunciation respellings ("Nashville
+  ( NASH-vil) is …", "John Huston ( HEW-stən; August 5, 1906 – …)") and
+  separators orphaned by what Wikipedia's extract drops ("Gamelan (;Javanese:
+  …"). Both are removed now.
+
 ## [0.9.0] - 2026-10-15
 
 ### Added

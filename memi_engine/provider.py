@@ -147,6 +147,8 @@ class CategoryProvider:
         On reveal the card shows a speaker button. It plays ``src`` when given
         and falls back to the browser's speech synthesis of ``text`` in
         ``lang`` (a BCP 47 tag) when there is no recording or it fails to play.
+        Add ``"before_reveal": True`` when hearing it is part of the question
+        (listen, then name it): the button then shows as soon as the card loads.
         """
         return None
 

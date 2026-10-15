@@ -189,6 +189,28 @@ def test_intro_drops_other_language_names():
     )
 
 
+def test_intro_drops_english_respellings():
+    cases = {
+        "Nashville ( NASH-vil) is the capital of Tennessee.":
+            "Nashville is the capital of Tennessee.",
+        "Yucca ( YUK-ə) is a genus.": "Yucca is a genus.",
+        "Castilleja ( kə-STIL-ee-ə or KAS-til-AY-ə), commonly known as paintbrush, "
+        "is a genus.": "Castilleja, commonly known as paintbrush, is a genus.",
+        "John Huston ( HEW-stən; August 5, 1906 – August 28, 1987) was a director.":
+            "John Huston (August 5, 1906 – August 28, 1987) was a director.",
+    }
+    for raw, clean in cases.items():
+        assert images.wikipedia_intro(raw) == clean
+    # Hyphenated words in an ordinary aside stay.
+    raw = "The war (Franco-Prussian, 1870) ended."
+    assert images.wikipedia_intro(raw) == raw
+
+
+def test_intro_drops_orphaned_separators():
+    raw = "Gamelan (;Javanese: ꦒꦩꦼꦭꦤ꧀, romanized: gamelan) is an ensemble."
+    assert images.wikipedia_intro(raw) == "Gamelan is an ensemble."
+
+
 def test_intro_drops_portuguese_asides():
     raw = (
         "O Sporting Clube de Portugal ComC • MHIH • OB (pronúncia em português: "

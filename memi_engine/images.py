@@ -309,6 +309,12 @@ _ASIDE = re.compile(
     rf"(?:,(?=\s+{_VERB}\b))?"
 )
 _IPA = re.compile(r"\s*\[[^\[\]]*\]")
+# English pronunciation respellings ("NASH-vil", "kə-LIST-oh", "YUK-ə"), as
+# the extract leaves them: right after an opening parenthesis and a space.
+_RESPELL = r"(?:[A-Za-zə]+-)+[A-Za-zə]+|[A-Za-z]*ə[A-Za-zə]*"
+_RESPELLING = re.compile(
+    rf"\(\s+(?:{_RESPELL})(?:\s+or\s+(?:{_RESPELL}))*\s*(?:;\s*|(?=\)))"
+)
 _HONOURS = re.compile(r"(?:\s+[A-Z][A-Za-z]{0,6}\s+•)+\s+[A-Z][A-Za-z]{0,6}(?=[\s,(])")
 # A full stop that ends a sentence, not an abbreviation ("St. Mary's", "Sr.
 # Jesus", "séc. XVI", "ul. Lipowa") or an initial ("Jan A. Kowalski", "D.
@@ -330,6 +336,11 @@ def wikipedia_intro(extract: str, limit: int = 600) -> str:
     # Transcriptions go first: they can hold parentheses of their own
     # ("[ˈspɔɾtĩɡ(ɨ)]") that would stop the aside around them from matching.
     para = _IPA.sub("", para)
+    # Respellings, and separators orphaned by what the extract already dropped:
+    # "Nashville ( NASH-vil)", "Huston ( HEW-stən; August 5, 1906 – …)",
+    # "Gamelan (;Javanese: …)".
+    para = _RESPELLING.sub("(", para)
+    para = re.sub(r"\(\s*[;,]\s*", "(", para)
     # Innermost asides first, so nested ones — "(Polish: […]; colloquially
     # kremówka (Polish: […]))" — peel away level by level.
     for _ in range(3):

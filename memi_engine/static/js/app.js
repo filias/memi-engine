@@ -376,6 +376,10 @@ function setCurrent(data) {
     currentAudio = data.audio || null;
     currentItem = data.item || data.name;
     currentCats = selectedCategories.join(',');
+    // Audio that is part of the question (hear it, then answer) is playable
+    // before the reveal; otherwise the button waits for the answer.
+    document.getElementById('speak-btn').hidden =
+        !(currentAudio && currentAudio.before_reveal && canSpeak(currentAudio));
 }
 
 // --- Details panel (layout="enriched" only; absent from the classic page) ---
