@@ -6,6 +6,31 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-15
+
+### Added
+- **The details panel fills itself from Wikipedia.** `get_details` used to
+  return `None` unless a provider wrote its own; the default now reads the
+  card's Wikipedia article — the one its "know more" link points at — and
+  shows its opening paragraph, cleaned of pronunciations, transcriptions,
+  other-language names and honours. So a game turns on `layout="enriched"` and
+  every Wikipedia-backed card gets a panel with no provider code. It is only
+  called in the enriched layout; classic games are unaffected.
+- **Maps per category.** `CategoryProvider.map_zoom` (default `None`, no map)
+  pins the panel's map on the article's Wikidata coordinates; `map_bounds`
+  drops coordinates outside an area, since some belong to something other than
+  the card (a river's point is its mouth).
+- **The panel speaks the game's language.** It shows the article from the
+  `html_lang` edition of Wikipedia when there is one, so a Portuguese game
+  whose cards link to English Wikipedia still gets Portuguese text; otherwise
+  it keeps the linked edition.
+- `CategoryProvider.get_wikipedia_title(item)` names the article for cards
+  whose link isn't a Wikipedia article (a local logo, a map file). New
+  helpers in `memi_engine.images`: `get_wikipedia_article`,
+  `wikipedia_intro`, `wikipedia_langlink`, `wikipedia_title_from_url`.
+  Failed lookups are not cached, so a network blip doesn't hide a card's
+  panel until restart.
+
 ## [0.6.0] - 2026-10-14
 
 ### Changed

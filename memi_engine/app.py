@@ -44,6 +44,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             If provided, files here are served alongside the engine's static files.
     """
     images.set_wikipedia_lang(config.wikipedia_lang)
+    images.set_details_lang(config.html_lang)
 
     engine_dir = os.path.dirname(__file__)
     engine_templates = os.path.join(engine_dir, "templates")

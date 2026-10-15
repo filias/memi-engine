@@ -104,6 +104,8 @@ class decorator on the definition.
 | `override_name`  | `False` | Use the item key as the display name, not the article title.       |
 | `footers`        | `[]`    | Footer IDs (attribution) to show when this category is active.     |
 | `tag_style`      | `None`  | `"plain"`, `"scientific"`, or `None` (auto-detect) — tag styling.  |
+| `map_zoom`       | `None`  | Zoom of the details panel's map (enriched layout); `None` = no map. |
+| `map_bounds`     | `None`  | `((lat_min, lat_max), (lon_min, lon_max))` — no map outside it.    |
 
 **Methods**
 
@@ -112,6 +114,16 @@ class decorator on the definition.
 | `get_image(item)`      | `{"name": ..., "image": ..., "url": ...}` or `None`. Default: Wikipedia. |
 | `get_tag(item)`        | A short subtitle for the revealed card, or `None`.            |
 | `get_clue(item)`       | A clue shown *before* reveal, or `None`.                      |
+| `get_details(item)`    | `{"text", "area": {"name", "url"}, "map": {"lat", "lon", "zoom"}}` for the enriched layout's panel, or `None`. Default: the Wikipedia article's intro (+ map if `map_zoom`). |
+| `get_wikipedia_title(item)` | `(lang, title)` of the article the panel describes. Default: from the `url` of `get_image`. |
+| `get_audio(item)`      | `{"text", "lang", "src"}` for a speaker button on reveal, or `None`. |
+
+**The details panel.** With `MemiConfig(layout="enriched")` a panel opens beside
+the card on reveal. By default it holds the opening paragraph of the card's
+Wikipedia article (the one *know more* links to), in the game's `html_lang`
+when that edition has the article. Set `map_zoom` on categories of places to pin
+a map on the article's coordinates; override `get_wikipedia_title` for cards
+whose link isn't a Wikipedia article, or `get_details` to write your own.
 
 The optional **`url`** in the `get_image` result is the item's source page; the
 engine turns it into the *"know more"* link shown on reveal (label set via
@@ -186,10 +198,11 @@ Passed to `create_app`. Common fields:
 | `wikipedia_lang`  | `"en"`               | Wikipedia edition for default images / *know more* links. |
 | `related_sites`   | `[]`                 | Sibling games to link from the about page. |
 | `label_*`         | English strings      | UI labels (for localization).            |
-| `html_lang`       | `"en"`               | `<html lang>` — set it for a non-English game. |
+| `html_lang`       | `"en"`               | `<html lang>` — set it for a non-English game; also the details panel's language. |
 | `site_url`        | `None`               | Canonical origin; taken from the request if unset. |
 | `description`     | `""`                 | Home page meta description; falls back to `about_html`. |
 | `og_image`        | `None`               | Link-preview image (absolute URL).       |
+| `layout`          | `"classic"`          | `"enriched"` adds the details panel and a prominent *know more*. |
 
 For a non-English game, set `wikipedia_lang` so the default image lookup and the
 *"know more"* link resolve against that language's Wikipedia (e.g. `"pt"`). It

@@ -8,9 +8,10 @@ resolve item names to image URLs.
 from __future__ import annotations
 
 import os
+import re
 import time
 from importlib.metadata import version as _pkg_version
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import requests
 
@@ -24,6 +25,18 @@ BONES_API_URL = os.environ.get("BONES_API_URL", "http://127.0.0.1:8081")
 # Wikipedia language edition used by the default image/description helpers.
 # Configurable via MemiConfig.wikipedia_lang or the MEMI_WIKIPEDIA_LANG env var.
 _WIKIPEDIA_LANG = os.environ.get("MEMI_WIKIPEDIA_LANG", "en")
+
+
+# Language the details panel is written in: the game's own (``html_lang``).
+# An article found in another edition is swapped for its counterpart here
+# when one exists. ``None`` keeps whatever edition the card links to.
+_DETAILS_LANG: str | None = None
+
+
+def set_details_lang(lang: str | None) -> None:
+    """Set the language of the details panel (e.g. "pt"; "pt-PT" counts as "pt")."""
+    global _DETAILS_LANG
+    _DETAILS_LANG = lang.split("-")[0].lower() if lang else None
 
 
 def set_wikipedia_lang(lang: str) -> None:
@@ -155,6 +168,194 @@ def _fetch_wikipedia_description(title):
     except Exception:
         pass
     return ""
+
+
+# --- Wikipedia articles (the enriched layout's details panel) ---
+
+_WIKI_URL = re.compile(r"^https?://([a-z][a-z-]*)\.(?:m\.)?wikipedia\.org/wiki/([^?#]+)")
+
+
+def wikipedia_title_from_url(url: str) -> tuple[str, str] | None:
+    """``(lang, title)`` of a Wikipedia article URL, or ``None`` for any other URL.
+
+    ``"https://pt.wikipedia.org/wiki/Torre_de_Bel%C3%A9m"`` ->
+    ``("pt", "Torre de Belém")``.
+    """
+    match = _WIKI_URL.match(url or "")
+    if not match:
+        return None
+    return match.group(1), unquote(match.group(2)).replace("_", " ")
+
+
+# Successful lookups only: a failed request (a network blip, a rate limit)
+# must not hide a card's details until the process restarts.
+_article_cache: dict = {}
+_ARTICLE_CACHE_MAX = 5000
+
+
+def get_wikipedia_article(title: str, lang: str | None = None) -> dict | None:
+    """The opening paragraph and coordinates of a Wikipedia article.
+
+    Returns ``{"intro": str, "coords": (lat, lon) | None}``, or ``None`` when
+    the lookup fails. ``lang`` defaults to the configured Wikipedia language.
+
+    Coordinates come from the article's Wikidata item (P625) rather than from
+    Wikipedia: the article's own are often only "secondary" (missing from the
+    default API answer) and sometimes plainly wrong.
+    """
+    lang = lang or _WIKIPEDIA_LANG
+    key = (title, lang)
+    if key in _article_cache:
+        return _article_cache[key]
+    try:
+        resp = requests.get(
+            f"https://{lang}.wikipedia.org/w/api.php",
+            params={
+                "action": "query",
+                "format": "json",
+                "prop": "extracts|pageprops",
+                "exintro": 1,
+                "explaintext": 1,
+                "ppprop": "wikibase_item",
+                "redirects": 1,
+                "titles": title,
+            },
+            headers=HEADERS,
+            timeout=5,
+        )
+        resp.raise_for_status()
+        page = next(iter(resp.json()["query"]["pages"].values()))
+        if "missing" in page:
+            return None
+        qid = page.get("pageprops", {}).get("wikibase_item")
+        coords = None
+        if qid:
+            resp = requests.get(
+                "https://www.wikidata.org/w/api.php",
+                params={
+                    "action": "wbgetclaims",
+                    "format": "json",
+                    "entity": qid,
+                    "property": "P625",
+                },
+                headers=HEADERS,
+                timeout=5,
+            )
+            resp.raise_for_status()
+            claims = resp.json().get("claims", {}).get("P625", [])
+            if claims:
+                value = claims[0]["mainsnak"]["datavalue"]["value"]
+                coords = (value["latitude"], value["longitude"])
+    except Exception:
+        return None
+    article = {"intro": wikipedia_intro(page.get("extract", "")), "coords": coords}
+    if len(_article_cache) >= _ARTICLE_CACHE_MAX:
+        _article_cache.clear()
+    _article_cache[key] = article
+    return article
+
+
+_langlink_cache: dict = {}
+
+
+def wikipedia_langlink(title: str, from_lang: str, to_lang: str) -> str | None:
+    """Title of the ``to_lang`` edition's article on the same subject, or ``None``.
+
+    ``("Belém Tower", "en", "pt")`` -> ``"Torre de Belém"``. Found titles are
+    cached; failed lookups are not, so a network blip isn't remembered.
+    """
+    if from_lang == to_lang:
+        return title
+    key = (title, from_lang, to_lang)
+    if key in _langlink_cache:
+        return _langlink_cache[key]
+    try:
+        resp = requests.get(
+            f"https://{from_lang}.wikipedia.org/w/api.php",
+            params={
+                "action": "query",
+                "format": "json",
+                "prop": "langlinks",
+                "lllang": to_lang,
+                "redirects": 1,
+                "titles": title,
+            },
+            headers=HEADERS,
+            timeout=5,
+        )
+        resp.raise_for_status()
+        page = next(iter(resp.json()["query"]["pages"].values()))
+    except Exception:
+        return None
+    links = page.get("langlinks") or []
+    found = links[0].get("*") if links else None
+    if len(_langlink_cache) >= _ARTICLE_CACHE_MAX:
+        _langlink_cache.clear()
+    _langlink_cache[key] = found
+    return found
+
+
+# Copulas that follow an article's subject, for the asides below ("The Cloth
+# Hall (…), is a …", "A Torre de Belém (…) é uma …").
+_VERB = r"(?:is|are|was|were|é|foi|são|era|eram|foram|fue|es|est|war|ist)"
+# A parenthetical that is pronunciation or another language's name — "(Polish:
+# Sukiennice, pronounced [sukʲɛˈɲːit͡sɛ])", "(in Polish. Kopiec Krakusa)",
+# "(pronúncia: [ˈtoʁɨ])" — rather
+# than content. A comma right after it belonged to the aside when the
+# sentence carries on with its verb.
+_ASIDE = re.compile(
+    r"\s*\((?=[^()]*(?:\[|:|pronounc|pronúnc|pronunc|listen|ouvir|escutar"
+    r"|\b(?:in|em|en) [^\W\d]+\.\s))[^()]*\)"
+    rf"(?:,(?=\s+{_VERB}\b))?"
+)
+_IPA = re.compile(r"\s*\[[^\[\]]*\]")
+_HONOURS = re.compile(r"(?:\s+[A-Z][A-Za-z]{0,6}\s+•)+\s+[A-Z][A-Za-z]{0,6}(?=[\s,(])")
+# A full stop that ends a sentence, not an abbreviation ("St. Mary's", "Sr.
+# Jesus", "séc. XVI", "ul. Lipowa") or an initial ("Jan A. Kowalski", "D.
+# Manuel", "n. 1950").
+_SENTENCE_END = re.compile(
+    r"(?<!\bSt\.)(?<!\bSr\.)(?<!\bSt[oa]\.)(?<!\bMt\.)(?<!\bDr\.)"
+    r"(?<!\bProf\.)(?<!\bséc\.)(?<!\bul\.)(?<!\blit\.)(?<!\b[A-Za-z]\.)"
+    r"(?<=[.!?])\s+(?=[A-ZÀ-ÝŁŚŻŹĆŃ])"
+)
+
+
+def wikipedia_intro(extract: str, limit: int = 600) -> str:
+    """First paragraph of a plain-text extract, minus pronunciation asides.
+
+    Trimmed to whole sentences within ``limit`` characters (the first sentence
+    is always kept).
+    """
+    para = next((p.strip() for p in extract.split("\n") if p.strip()), "")
+    # Transcriptions go first: they can hold parentheses of their own
+    # ("[ˈspɔɾtĩɡ(ɨ)]") that would stop the aside around them from matching.
+    para = _IPA.sub("", para)
+    # Innermost asides first, so nested ones — "(Polish: […]; colloquially
+    # kremówka (Polish: […]))" — peel away level by level.
+    for _ in range(3):
+        para = _ASIDE.sub("", para)
+    # Honours after a name: "Sporting Clube de Portugal ComC • MHIH • OB".
+    para = _HONOURS.sub("", para)
+    # Whatever is left of an aside that never closed ("Napoleonka (Polish: ;
+    # colloquially kremówka is a …"): drop it up to its verb, within the
+    # sentence.
+    para = re.sub(
+        rf"\s*\((?![^()]*\))[^().]*?[;:][^().]*?(?=\s{_VERB}\b)", "", para
+    )
+    # An aside emptied of everything but punctuation: "Lisboa ( ) é …".
+    para = re.sub(r"\s*\([\s,;:]*\)", "", para)
+    para = re.sub(r"\s+([,.;])", r"\1", re.sub(r"\s{2,}", " ", para)).strip()
+    # A quoted name leading the paragraph: "”Manggha” Museum …".
+    para = re.sub(r'^["“”„]([^"“”„]+)["“”„]', r"\1", para)
+    if len(para) <= limit:
+        return para
+    sentences = _SENTENCE_END.split(para)
+    kept = sentences[0]
+    for sentence in sentences[1:]:
+        if len(kept) + 1 + len(sentence) > limit:
+            break
+        kept += " " + sentence
+    return kept
 
 
 # --- Wikimedia Commons ---

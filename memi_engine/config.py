@@ -95,7 +95,8 @@ class MemiConfig:
 
     # <html lang>. The engine is English; the games mostly are not, and a page
     # that declares the wrong language is a page Google shows to the wrong
-    # people. Set it per instance ("pt", "sk", "ca").
+    # people. Set it per instance ("pt", "sk", "ca"). The enriched layout's
+    # details panel is written in this language too, where Wikipedia has it.
     html_lang: str = "en"
 
     # Meta description for the home page. Empty falls back to the opening of

@@ -24,6 +24,12 @@ class CategoryProvider:
         override_name: If True, the item key is used as the display name
             instead of the Wikipedia article title.
         footers: List of footer IDs to show when this category is active.
+        map_zoom: Zoom of the details panel's map (enriched layout), pinned on
+            the item's Wikidata coordinates. ``None`` (the default) for no map
+            — right for things that aren't places, like food or people.
+        map_bounds: Optional ``((lat_min, lat_max), (lon_min, lon_max))``.
+            Coordinates outside it get no map: they belong to something other
+            than what the card shows (a river's point is often its mouth).
     """
 
     key: str = ""
@@ -34,6 +40,8 @@ class CategoryProvider:
     override_name: bool = False
     footers: list[str] = []
     tag_style: str | None = None  # "plain", "scientific", or None (auto-detect)
+    map_zoom: int | None = None
+    map_bounds: tuple[tuple[float, float], tuple[float, float]] | None = None
 
     def __init__(self) -> None:
         # Copy the declarative class-level containers onto the instance so the
@@ -75,8 +83,56 @@ class CategoryProvider:
 
         ``map`` shows an OpenStreetMap view pinned at ``lat``/``lon``; ``zoom``
         defaults to 17 (street level).
+
+        The default reads the item's Wikipedia article (see
+        :meth:`get_wikipedia_title`) — in the game's language (``html_lang``)
+        when that edition has one: its opening paragraph as ``text``, and a
+        ``map`` on its coordinates when the category sets ``map_zoom`` (and
+        they fall inside ``map_bounds``, if set). Override to say something of
+        your own; return ``None`` for no panel.
         """
-        return None
+        from memi_engine import images
+
+        found = self.get_wikipedia_title(item)
+        if not found:
+            return None
+        lang, title = found
+        # In the game's own language when that edition has the article.
+        want = images._DETAILS_LANG
+        if want and want != lang:
+            translated = images.wikipedia_langlink(title, lang, want)
+            if translated:
+                lang, title = want, translated
+        article = images.get_wikipedia_article(title, lang)
+        if not article:
+            return None
+        details: dict = {}
+        if article["intro"]:
+            details["text"] = article["intro"]
+        coords = article["coords"]
+        if self.map_zoom and coords and self._in_map_bounds(*coords):
+            lat, lon = coords
+            details["map"] = {"lat": lat, "lon": lon, "zoom": self.map_zoom}
+        return details or None
+
+    def get_wikipedia_title(self, item: str) -> tuple[str, str] | None:
+        """``(lang, title)`` of the article the details panel describes.
+
+        The default follows the card's "know more" link — the ``url`` that
+        :meth:`get_image` returns — when it is a Wikipedia article, so the
+        panel and the link always describe the same thing. Override for cards
+        whose link goes elsewhere (or has none) but that do have an article.
+        """
+        from memi_engine.images import wikipedia_title_from_url
+
+        result = self.get_image(item) or {}
+        return wikipedia_title_from_url(result.get("url", ""))
+
+    def _in_map_bounds(self, lat: float, lon: float) -> bool:
+        if not self.map_bounds:
+            return True
+        (lat_min, lat_max), (lon_min, lon_max) = self.map_bounds
+        return lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
 
     def get_audio(self, item: str) -> dict | None:
         """Return how to say the answer aloud, or None for no speaker button.
