@@ -104,6 +104,7 @@ class decorator on the definition.
 | `override_name`  | `False` | Use the item key as the display name, not the article title.       |
 | `footers`        | `[]`    | Footer IDs (attribution) to show when this category is active.     |
 | `tag_style`      | `None`  | `"plain"`, `"scientific"`, or `None` (auto-detect) — tag styling.  |
+| `submenu_default` | `False` | Opening its submenu starts this category (and lists it first).   |
 | `map_zoom`       | `None`  | Zoom of the details panel's map (enriched layout); `None` = no map. |
 | `map_bounds`     | `None`  | `((lat_min, lat_max), (lon_min, lon_max))` — no map outside it.    |
 

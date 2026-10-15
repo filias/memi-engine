@@ -53,6 +53,7 @@ function renderSubmenu(items, group) {
                 selectedCategories = [];
                 seenItems = [];
                 renderSubmenu(sub.children, sub.label);
+                startSubmenuDefault(sub.children);
             };
         } else {
             btn.dataset.key = sub.key;
@@ -84,6 +85,20 @@ function toggleSubmenu(parent) {
     menuStack = [];
     syncUrl();
     renderSubmenu(subcategories[parent], parent);
+    startSubmenuDefault(subcategories[parent]);
+}
+
+// A submenu can name the category it opens on (a provider's submenu_default):
+// opening it then starts that one instead of waiting for a choice. Skipped
+// while a shared link opens its own category, so it doesn't load twice.
+let openingInitialCategory = false;
+
+function startSubmenuDefault(items) {
+    if (openingInitialCategory) return;
+    const sub = items.find(s => s.default && s.key);
+    if (!sub) return;
+    const btn = document.querySelector('#submenu-buttons [data-key="' + CSS.escape(sub.key) + '"]');
+    if (btn) btn.click();
 }
 
 function markSubmenuActive(btn) {
@@ -577,6 +592,15 @@ function handleClick() {
 // INITIAL_CATEGORY. We drive the real menu buttons so the selected state and the
 // game load exactly as if the user had clicked through.
 function startInitialCategory(key) {
+    openingInitialCategory = true;
+    try {
+        clickThroughTo(key);
+    } finally {
+        openingInitialCategory = false;
+    }
+}
+
+function clickThroughTo(key) {
     const parts = key.split(':');
     const top = Array.prototype.slice
         .call(document.querySelectorAll('#main-categories button'))

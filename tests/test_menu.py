@@ -53,3 +53,18 @@ def test_all_sorts_first():
     _register("nature:lion")
     _, subs = build_menu()
     assert subs["nature"][0]["label"] == "all"
+
+
+def test_submenu_default_is_marked_and_listed_first():
+    for key in ("lang:english → polish", "lang:polish → english"):
+        _register(key)
+    p = CategoryProvider()
+    p.key = "lang:polish → english"
+    p.items = ["item"]
+    p.submenu_default = True
+    register(p)
+    _, subs = build_menu()
+    labels = [c["label"] for c in subs["lang"]]
+    assert labels == ["polish → english", "english → polish"]
+    assert subs["lang"][0]["default"] is True
+    assert "default" not in subs["lang"][1]

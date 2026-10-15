@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-15
+
+### Added
+- **A submenu can open on a category.** Set `submenu_default = True` on a
+  provider and opening its submenu starts that category playing, listed first,
+  instead of waiting for a choice. A shared link to another category of the
+  same submenu still opens that one.
+
 ## [0.7.0] - 2026-10-15
 
 ### Added

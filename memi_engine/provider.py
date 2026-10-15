@@ -24,6 +24,8 @@ class CategoryProvider:
         override_name: If True, the item key is used as the display name
             instead of the Wikipedia article title.
         footers: List of footer IDs to show when this category is active.
+        submenu_default: If True, opening this category's submenu starts it
+            playing (and lists it first) instead of waiting for a choice.
         map_zoom: Zoom of the details panel's map (enriched layout), pinned on
             the item's Wikidata coordinates. ``None`` (the default) for no map
             — right for things that aren't places, like food or people.
@@ -40,6 +42,7 @@ class CategoryProvider:
     override_name: bool = False
     footers: list[str] = []
     tag_style: str | None = None  # "plain", "scientific", or None (auto-detect)
+    submenu_default: bool = False
     map_zoom: int | None = None
     map_bounds: tuple[tuple[float, float], tuple[float, float]] | None = None
 

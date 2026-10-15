@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from memi_engine.registry import get_categories
+from memi_engine.registry import get, get_categories
 
 
 def build_menu():
@@ -25,20 +25,20 @@ def build_menu():
         elif len(parts) == 2:
             parent, label = parts
             top_level_keys.add(parent)
-            subs.setdefault(parent, []).append({"key": key, "label": label})
+            subs.setdefault(parent, []).append(_leaf(key, label))
         elif len(parts) == 3:
             parent, group, label = parts
             top_level_keys.add(parent)
             parent_list = subs.setdefault(parent, [])
             sub_group = _find_or_create_group(parent_list, group)
-            sub_group["children"].append({"key": key, "label": label})
+            sub_group["children"].append(_leaf(key, label))
         elif len(parts) == 4:
             parent, group, subgroup, label = parts
             top_level_keys.add(parent)
             parent_list = subs.setdefault(parent, [])
             group_node = _find_or_create_group(parent_list, group)
             sub_node = _find_or_create_group(group_node["children"], subgroup)
-            sub_node["children"].append({"key": key, "label": label})
+            sub_node["children"].append(_leaf(key, label))
 
     top_level = []
     for name in sorted(top_level_keys):
@@ -61,6 +61,15 @@ def _find_or_create_group(items, label):
     return node
 
 
+def _leaf(key, label):
+    """A submenu entry; ``default`` marks the category its submenu opens on."""
+    leaf = {"key": key, "label": label}
+    provider = get(key)
+    if provider is not None and provider.submenu_default:
+        leaf["default"] = True
+    return leaf
+
+
 def _sort_children(subs):
     if isinstance(subs, dict):
         for cat in subs:
@@ -73,4 +82,11 @@ def _sort_list(items):
     for item in items:
         if "children" in item:
             _sort_list(item["children"])
-    items.sort(key=lambda s: (s.get("label", "") != "all", s.get("label", "")))
+    # An own "all" category first, then the submenu's default, then A-Z.
+    items.sort(
+        key=lambda s: (
+            s.get("label", "") != "all",
+            not s.get("default", False),
+            s.get("label", ""),
+        )
+    )
