@@ -301,3 +301,84 @@ def test_page_knows_every_category_slug(client):
     page = client.get("/").data.decode()
     assert "var CATEGORY_SLUGS = " in page
     assert '"culture:food": "food"' in page
+
+
+# --- Category page content ---
+
+def test_category_page_names_the_category_in_the_markup(client):
+    html = head_of(client, "/monuments")
+    assert "<h2>monuments</h2>" in html
+
+
+def test_category_page_lists_its_items(client):
+    html = head_of(client, "/monuments")
+    assert "Belem Tower · Jeronimos" in html
+
+
+def test_the_list_is_closed_by_default(client):
+    # The names are the answers the game asks for: in the markup for a
+    # crawler, not on screen for a player who didn't ask.
+    html = head_of(client, "/monuments")
+    assert "<details class=\"category-contents\">" in html
+    assert "<details open" not in html
+
+
+def test_the_list_is_counted(client):
+    # The default label's apostrophe is escaped by Jinja, hence the partial.
+    assert "in this category (2)" in head_of(client, "/monuments")
+
+
+def test_contents_label_is_localizable():
+    c = make_client(label_contents="o que há nesta categoria")
+    assert "o que há nesta categoria (2)" in head_of(c, "/monuments")
+
+
+def test_home_page_has_no_category_section(client):
+    html = head_of(client, "/")
+    assert "category-note" not in html
+
+
+def test_query_string_form_gets_the_section_too(client):
+    assert "<h2>monuments</h2>" in head_of(client, "/?cat=culture:monuments")
+
+
+def test_intro_is_off_by_default(client):
+    assert "category-intro" not in head_of(client, "/monuments")
+
+
+def test_intro_renders_its_pattern():
+    c = make_client(category_intro="{count} {category} de Portugal para nomear.")
+    assert "2 monuments de Portugal para nomear." in head_of(c, "/monuments")
+
+
+def test_long_categories_are_capped():
+    class Many(CategoryProvider):
+        key = "culture:many"
+        items = [f"Item {n}" for n in range(300)]
+
+    register(Many())
+    app = create_app(MemiConfig(contents_max=50))
+    html = app.test_client().get("/many").data.decode()
+    assert html.count(" · ") == 49
+    assert "Item 49 …" in html
+    # The count is the real one, not the truncated list's length.
+    assert "category (300)" in html
+
+
+def test_every_category_is_linked_from_every_page(client):
+    # The menu is buttons wired to JavaScript; these are the only real links
+    # to the landing pages, and the only ones a crawler can follow.
+    for path in ("/", "/monuments"):
+        html = head_of(client, path)
+        assert '<a href="/monuments">monuments</a>' in html
+        assert '<a href="/food">food</a>' in html
+
+
+def test_excluded_items_stay_out_of_the_list(client, monkeypatch):
+    from memi_engine import app as app_module
+
+    monkeypatch.setattr(app_module, "_excluded_items", {"Jeronimos"})
+    html = head_of(client, "/monuments")
+    assert "Belem Tower" in html
+    assert "Jeronimos" not in html
+    assert "category (1)" in html

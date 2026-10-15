@@ -81,6 +81,25 @@
         <p id="clue-letters" class="clue-letters"></p>
     </div>
 
+    {# A category landing page says, in the markup, which category it is and
+       what is in it. The game above is all JavaScript state, so this is the
+       only part of the page a crawler can read — and the item names are what
+       people search for. The list is closed: those names are the answers. #}
+    {%- if category %}
+    <section class="category-note">
+        <h2>{{ category.label }}</h2>
+        {%- if category.intro %}
+        <p class="category-intro">{{ category.intro }}</p>
+        {%- endif %}
+        {%- if category.names %}
+        <details class="category-contents">
+            <summary>{{ config.label_contents }} ({{ category.count }})</summary>
+            <p>{{ category.names | join(' · ') }}{% if category.hidden %} …{% endif %}</p>
+        </details>
+        {%- endif %}
+    </section>
+    {%- endif %}
+
     <script>
     function setTheme(theme) {
         document.documentElement.dataset.theme = theme;
@@ -116,6 +135,13 @@
         {{ footer_html | safe }}
     </footer>
     {% endfor %}
+    {%- if category_index %}
+    <nav class="category-index" aria-label="{{ config.label_pick_category }}">
+        {%- for label, slug in category_index %}
+        <a href="/{{ slug }}">{{ label }}</a>
+        {%- endfor %}
+    </nav>
+    {%- endif %}
     <footer id="wikipedia-footer" style="margin-top:3rem; padding:1rem; text-align:center; font-size:0.75rem; color:var(--muted);">
         Images from <a href="https://www.wikipedia.org/" target="_blank" rel="noopener" style="color:var(--link);">Wikipedia</a>
         &amp; <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener" style="color:var(--link);">Wikimedia Commons</a>

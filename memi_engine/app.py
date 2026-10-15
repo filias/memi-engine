@@ -120,12 +120,35 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             "og_image": config.og_image,
         }
 
-    def _category_page_meta(key: str) -> dict:
+    def _category_items(key: str) -> list[str]:
         provider = registry.get(key)
-        count = len(provider.items) if provider else 0
-        return seo.category_meta(config, key, count)
+        if not provider:
+            return []
+        return [i for i in provider.items if i not in _excluded_items]
 
-    def _render_index(initial_category=None, page=None):
+    def _category_page_meta(key: str) -> dict:
+        return seo.category_meta(config, key, len(_category_items(key)))
+
+    def _category_content(key: str) -> dict:
+        """The server-rendered half of a category landing page.
+
+        The game itself is a canvas of JavaScript state, so without this the
+        page is a heading and some buttons — roughly forty words, none of them
+        about this category. The item names are the words people actually
+        search, and they are already here; they just never reached the markup.
+        """
+        items = _category_items(key)
+        shown = items[: config.contents_max]
+        return {
+            "label": seo.category_label(key),
+            "intro": seo.category_intro(config, key, len(items)),
+            "count": len(items),
+            # Not "items": Jinja resolves `category.items` to dict.items.
+            "names": shown,
+            "hidden": len(items) - len(shown),
+        }
+
+    def _render_index(initial_category=None, page=None, category=None):
         top_level, subs = build_menu()
         # Collect all unique filters from all providers
         all_filters = _collect_filters()
@@ -138,6 +161,14 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             filters=all_filters,
             initial_category=initial_category,
             category_slugs=seo.canonical_slugs(registry.get_all()),
+            category=category,
+            # Real links to every category page. The menu is buttons wired to
+            # JavaScript, so until now nothing on the site linked to a landing
+            # page — they existed, and only the sitemap said so.
+            category_index=sorted(
+                (seo.category_label(key), slug)
+                for key, slug in seo.canonical_slugs(registry.get_all()).items()
+            ),
             page=page or _page(seo.home_meta(config), "/"),
         )
 
@@ -158,7 +189,8 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             slug = seo.canonical_slugs(registry.get_all()).get(initial)
             if slug:
                 page = _page(_category_page_meta(initial), f"/{slug}")
-        return _render_index(initial, page)
+        category = _category_content(initial) if page else None
+        return _render_index(initial, page, category)
 
     @app.route("/<slug>")
     def category_landing(slug):
@@ -170,7 +202,11 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         # /culture-food. Both keep working; the canonical names the short one
         # so the pair is never indexed as two pages.
         canonical = seo.canonical_slugs(registry.get_all()).get(key, slug)
-        return _render_index(key, _page(_category_page_meta(key), f"/{canonical}"))
+        return _render_index(
+            key,
+            _page(_category_page_meta(key), f"/{canonical}"),
+            _category_content(key),
+        )
 
     @app.route("/about")
     def about():

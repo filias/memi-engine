@@ -180,6 +180,19 @@ def about_meta(config) -> dict[str, str]:
     }
 
 
+def category_intro(config, key: str, count: int) -> str:
+    """The visible line under a category page's heading, or ``""``."""
+    if not config.category_intro:
+        return ""
+    return _format(
+        config.category_intro,
+        category=category_label(key),
+        title=config.title,
+        subtitle=config.subtitle,
+        count=str(count),
+    )
+
+
 def category_meta(config, key: str, count: int = 0) -> dict[str, str]:
     """Title and description for one category's landing page.
 

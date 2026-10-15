@@ -843,3 +843,66 @@ h1 a {
 .speak-btn[hidden] {
     display: none;
 }
+
+/* --- Category landing pages ---
+   The server-rendered half of /<slug>: what this category is, and a closed
+   list of what is in it. Quiet by design — the game is the page, this is the
+   part that explains it to a crawler and to anyone who scrolls. */
+
+.category-note {
+    max-width: 40rem;
+    margin: 3rem auto 0;
+    padding: 0 1rem;
+    text-align: center;
+}
+
+.category-note h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0;
+}
+
+.category-intro {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.category-contents {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.category-contents summary {
+    cursor: pointer;
+}
+
+.category-contents p {
+    margin: 0.5rem 0 0;
+    line-height: 1.6;
+}
+
+/* Every category page, as links. The menu above is buttons driven by
+   JavaScript, so this is what a crawler follows — and what a visitor uses
+   when they know the name of what they want. */
+.category-index {
+    max-width: 52rem;
+    margin: 3rem auto 0;
+    padding: 0 1rem;
+    text-align: center;
+    font-size: 0.7rem;
+    line-height: 2;
+    color: var(--muted);
+}
+
+.category-index a {
+    color: var(--muted);
+    text-decoration: none;
+    margin: 0 0.4rem;
+}
+
+.category-index a:hover {
+    text-decoration: underline;
+}

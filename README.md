@@ -203,6 +203,9 @@ Passed to `create_app`. Common fields:
 | `site_url`        | `None`               | Canonical origin; taken from the request if unset. |
 | `description`     | `""`                 | Home page meta description; falls back to `about_html`. |
 | `og_image`        | `None`               | Link-preview image (absolute URL).       |
+| `category_intro`  | `""`                 | Visible line on a category page; pattern with `{category}`/`{count}`. |
+| `label_contents`  | `"what's in…"`       | Summary of a category page's collapsed item list. |
+| `contents_max`    | `200`                | Most item names that list will show.     |
 | `layout`          | `"classic"`          | `"enriched"` adds the details panel and a prominent *know more*. |
 
 For a non-English game, set `wikipedia_lang` so the default image lookup and the
@@ -242,6 +245,18 @@ The title and description patterns are `home_title`, `category_title` and
 `category_description` on `MemiConfig`; a category pattern can also use
 `{count}`, the number of items in it. Defaults are punctuation only, so a
 localized game stays in its own language without touching them.
+
+A category page also renders content a crawler can read, since the game above
+it is pure JavaScript state: a heading with the category's label, the optional
+`category_intro` line, and the category's item names in a `<details>` that is
+**closed by default** — the names are the answers the game asks players to
+recall, so they belong in the markup without being shown to a player who didn't
+ask for them. `label_contents` is that block's summary (localize it like any
+other label); `contents_max` caps a long list at 200 names.
+
+Every page also carries a `<nav>` of real links to each category page. The menu
+itself is buttons wired to JavaScript, so without it nothing on the site links
+to a landing page at all.
 
 Two more things fall out of this:
 

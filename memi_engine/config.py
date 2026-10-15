@@ -116,6 +116,25 @@ class MemiConfig:
     # description resolved above.
     category_description: str = "{category} — {description}"
 
+    # Visible copy on a category landing page. Without it the page is a card
+    # and some buttons — nothing a search engine can match a query against.
+    #
+    # The heading is the category's own label, so it needs no translation. This
+    # is the line under it: a pattern like category_title, with {category},
+    # {count}, {title} and {subtitle}. Empty renders no paragraph.
+    category_intro: str = ""
+
+    # Summary of the collapsed list of the category's items. Closed by default:
+    # the names are the answers the game asks players to recall, so they are in
+    # the markup for a crawler to read without being shown to a player who
+    # didn't ask. Set it in the game's language, like the other label_* fields.
+    label_contents: str = "what's in this category"
+
+    # How many item names that list holds at most. A long category costs bytes
+    # on every page load, and a crawler has seen the point long before the
+    # five-hundredth name.
+    contents_max: int = 200
+
     def __post_init__(self) -> None:
         if self.layout not in LAYOUTS:
             raise ValueError(

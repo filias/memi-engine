@@ -6,6 +6,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-15
+
+### Added
+- **A category landing page now says what it is, in the markup.** `/<slug>`
+  renders a heading with the category's label, an optional line of copy
+  (`MemiConfig.category_intro`, a pattern like the title ones, with `{count}`),
+  and the category's item names in a `<details>` closed by default. The game
+  above it is JavaScript state, so this is the only part of the page a crawler
+  can read — and the item names are what people actually search for. Closed,
+  because those names are the answers the game asks players to recall: in the
+  markup for a crawler, not on screen for a player who didn't ask.
+  `label_contents` is the summary line (localize it like any other label) and
+  `contents_max` caps how many names a long category lists (default 200).
+- **Real links to every category page**, as a quiet `<nav>` on each page. The
+  menu is buttons wired to JavaScript, so nothing on the site linked to a
+  landing page before this — they existed, and only the sitemap said so.
+
 ## [0.8.0] - 2026-10-15
 
 ### Added
