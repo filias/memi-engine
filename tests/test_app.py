@@ -375,3 +375,28 @@ def test_about_links_are_styled_for_every_theme():
 
     css = (Path(memi_engine.__file__).parent / "static/css/style.css").read_text()
     assert ".content p a:not(.back-link)," in css and "color: var(--accent);" in css
+
+
+class Commas(CategoryProvider):
+    key = "demo:commas"
+    items = ["Pantheon, Rome", "Colosseum"]
+
+    def get_image(self, item):
+        return {"name": item, "image": f"http://img.test/{item}.png"}
+
+
+def test_seen_item_with_a_comma_counts_as_seen():
+    register(Commas())
+    client = create_app(MemiConfig()).test_client()
+    url = "/api/random?cats=demo:commas&seen=Pantheon%2C%20Rome"
+    for _ in range(10):
+        assert client.get(url).get_json()["item"] == "Colosseum"
+    both = url + "&seen=Colosseum"
+    assert client.get(both).status_code == 400  # all seen
+
+
+def test_old_comma_joined_seen_still_works():
+    register(Commas())
+    client = create_app(MemiConfig()).test_client()
+    resp = client.get("/api/random?cats=demo:commas&seen=Colosseum,Other")
+    assert resp.get_json()["item"] == "Pantheon, Rome"

@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-20
+
+### Fixed
+- **An item whose name has a comma never counted as seen** ("Pantheon, Rome",
+  "nota, vă rog"): the page sent the seen items joined by commas, so such a
+  card could come back again and a category holding one never reached "all
+  done". The page now sends one `seen=` per item; the old comma-joined form
+  is still understood, for pages opened before the update.
+
 ## [0.11.0] - 2026-10-20
 
 ### Added

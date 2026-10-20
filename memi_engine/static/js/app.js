@@ -215,8 +215,9 @@ function buildFetchUrl() {
     if (typeof GAME_LANG === 'string' && GAME_LANG) {
         url += `&lang=${encodeURIComponent(GAME_LANG)}`;
     }
-    if (seenItems.length > 0) {
-        url += `&seen=${encodeURIComponent(seenItems.join(','))}`;
+    // One seen= per item: names can contain commas ("Pantheon, Rome").
+    for (const item of seenItems) {
+        url += `&seen=${encodeURIComponent(item)}`;
     }
     for (const [filterName, values] of Object.entries(activeFilters)) {
         if (values.length > 0) {

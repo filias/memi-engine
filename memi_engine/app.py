@@ -384,11 +384,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         if not cat_list:
             return jsonify({"error": "Unknown category"}), 400
 
-        seen = (
-            set(request.args.get("seen", "").split(","))
-            if request.args.get("seen")
-            else set()
-        )
+        seen = _seen_items(provider_items_for=cat_list)
 
         category = random.choice(cat_list)
         provider = registry.get(category)
@@ -483,6 +479,26 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         return jsonify({"status": "ok", "categories": len(registry.get_all())})
 
     return app
+
+
+def _seen_items(provider_items_for: list[str]) -> set[str]:
+    """The items this player has already seen, from the ``seen`` parameters.
+
+    The page sends one ``seen=`` per item, since names can contain commas
+    ("Pantheon, Rome"). A page loaded before that change still sends them
+    joined by commas in a single value: split that, unless the whole value is
+    itself an item.
+    """
+    values = request.args.getlist("seen")
+    if len(values) == 1 and "," in values[0]:
+        known = {
+            item
+            for key in provider_items_for
+            for item in (registry.get(key).items if registry.get(key) else [])
+        }
+        if values[0] not in known:
+            values = values[0].split(",")
+    return {v for v in values if v}
 
 
 def _collect_filters() -> dict:
