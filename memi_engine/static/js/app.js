@@ -47,6 +47,8 @@ function renderSubmenu(items, group) {
     for (const sub of items) {
         const btn = document.createElement('button');
         btn.textContent = sub.text || sub.label;
+        // The key segment, for deep links: what's shown may be a translation.
+        btn.dataset.label = sub.label;
         if (sub.children) {
             btn.onclick = function() {
                 menuStack.push({items, group: currentGroup});
@@ -612,14 +614,14 @@ function clickThroughTo(key) {
     const parts = key.split(':');
     const top = Array.prototype.slice
         .call(document.querySelectorAll('#main-categories button'))
-        .find(b => b.textContent.trim() === parts[0]);
+        .find(b => b.dataset.label === parts[0]);
     if (!top) return;
     top.click();  // top-level: selects & loads; parent: opens its submenu
     // Walk any intermediate group levels, then click the leaf subcategory.
     for (let i = 1; i < parts.length - 1; i++) {
         const group = Array.prototype.slice
             .call(document.querySelectorAll('#submenu-buttons button'))
-            .find(b => b.textContent.trim() === parts[i] && !b.dataset.key);
+            .find(b => b.dataset.label === parts[i] && !b.dataset.key);
         if (group) group.click();
     }
     if (parts.length > 1) {

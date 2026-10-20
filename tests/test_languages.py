@@ -172,3 +172,10 @@ def test_details_panel_follows_the_request_language():
     assert client.get(url).get_json()["details"]["text"] == "pt"
     # Nothing leaks into the next request.
     assert images.details_lang() == "pt"
+
+
+def test_menu_buttons_carry_their_key_segment(client):
+    # Deep links (/en/animais) find the buttons by segment, not by the
+    # translated text they show.
+    html = client.get("/en/").get_data(as_text=True)
+    assert 'data-label="natureza"' in html

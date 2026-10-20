@@ -23,9 +23,9 @@
     <div class="categories" id="main-categories">
         {% for item in top_level %}
         {% if item.has_submenu %}
-        <button onclick='toggleSubmenu({{ item.label | tojson }})'>{{ item.text or item.label }}</button>
+        <button data-label="{{ item.label }}" onclick='toggleSubmenu({{ item.label | tojson }})'>{{ item.text or item.label }}</button>
         {% else %}
-        <button onclick='selectCategory({{ item.key | tojson }}); this.classList.add("active")'>{{ item.text or item.label }}</button>
+        <button data-label="{{ item.label }}" onclick='selectCategory({{ item.key | tojson }}); this.classList.add("active")'>{{ item.text or item.label }}</button>
         {% endif %}
         {% endfor %}
     </div>
