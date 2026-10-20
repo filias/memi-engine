@@ -19,6 +19,7 @@ from flask import (
     Response,
     abort,
     jsonify,
+    redirect,
     render_template,
     request,
     send_from_directory,
@@ -104,6 +105,43 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
     # Load excluded items
     _load_excluded_items(app)
 
+    # --- Languages ---
+    #
+    # The game's own language is served at /, each of config.languages under
+    # /<code>/. Everything a page shows comes from that language's config.
+    base_lang = config.lang
+    configs = {base_lang: config}
+    for code in config.languages:
+        configs[code] = config.for_language(code)
+    lang_cookie = "memi-lang"
+
+    def _prefix(lang: str) -> str:
+        return "" if lang == base_lang else f"/{lang}"
+
+    def _switch(lang: str, path: str) -> list[dict]:
+        """The header's language switch: each language's URL for this page."""
+        if len(configs) < 2:
+            return []
+        return [
+            {
+                "code": code,
+                "href": _prefix(code) + path if path != "/" else _prefix(code) + "/",
+                "active": code == lang,
+            }
+            for code in configs
+        ]
+
+    def _preferred_elsewhere(lang: str, path: str):
+        """Send a visitor who chose another language to that language's page.
+
+        Only for the game's own language: a link shared in English stays in
+        English for whoever opens it.
+        """
+        chosen = request.cookies.get(lang_cookie)
+        if lang == base_lang and chosen in configs and chosen != base_lang:
+            return redirect(_prefix(chosen) + path)
+        return None
+
     # --- Routes ---
 
     def _site_url() -> str:
@@ -111,13 +149,24 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         pinned = config.site_url or os.environ.get("MEMI_SITE_URL")
         return (pinned or request.url_root).rstrip("/")
 
-    def _page(meta: dict, path: str) -> dict:
-        """Head metadata for one page: what it is, and where it really lives."""
+    def _page(meta: dict, path: str, lang: str = "") -> dict:
+        """Head metadata for one page: what it is, and where it really lives.
+
+        ``path`` is the page's path in the game's own language; ``lang`` picks
+        which language's URL is canonical. With other languages, ``alternates``
+        lists every version for hreflang.
+        """
+        lang = lang or base_lang
+        full = (_prefix(lang) + path) if path != "/" else (_prefix(lang) + "/")
         return {
             "title": meta["title"],
             "description": meta["description"],
-            "canonical": _site_url() + quote(path),
+            "canonical": _site_url() + quote(full),
             "og_image": config.og_image,
+            "alternates": [
+                {"lang": code, "href": _site_url() + quote(link["href"])}
+                for code, link in zip(configs, _switch(lang, path))
+            ],
         }
 
     def _category_items(key: str) -> list[str]:
@@ -126,10 +175,11 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             return []
         return [i for i in provider.items if i not in _excluded_items]
 
-    def _category_page_meta(key: str) -> dict:
-        return seo.category_meta(config, key, len(_category_items(key)))
+    def _category_page_meta(key: str, lang: str = "") -> dict:
+        cfg = configs[lang or base_lang]
+        return seo.category_meta(cfg, key, len(_category_items(key)))
 
-    def _category_content(key: str) -> dict:
+    def _category_content(key: str, lang: str = "") -> dict:
         """The server-rendered half of a category landing page.
 
         The game itself is a canvas of JavaScript state, so without this the
@@ -137,19 +187,27 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         about this category. The item names are the words people actually
         search, and they are already here; they just never reached the markup.
         """
+        lang = lang or base_lang
+        cfg = configs[lang]
         items = _category_items(key)
-        shown = items[: config.contents_max]
+        shown = items[: cfg.contents_max]
+        if lang != base_lang:
+            provider = registry.get(key)
+            shown = [provider.translate(i, lang) for i in shown]
         return {
-            "label": seo.category_label(key),
-            "intro": seo.category_intro(config, key, len(items)),
+            "label": seo.category_label(key, cfg.category_labels),
+            "intro": seo.category_intro(cfg, key, len(items)),
             "count": len(items),
             # Not "items": Jinja resolves `category.items` to dict.items.
             "names": shown,
             "hidden": len(items) - len(shown),
         }
 
-    def _render_index(initial_category=None, page=None, category=None):
-        top_level, subs = build_menu()
+    def _render_index(initial_category=None, page=None, category=None,
+                      lang="", path="/"):
+        lang = lang or base_lang
+        cfg = configs[lang]
+        top_level, subs = build_menu(cfg.category_labels)
         # Collect all unique filters from all providers
         all_filters = _collect_filters()
         return render_template(
@@ -157,7 +215,7 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             top_level=top_level,
             subcategories=subs,
             version=config.version,
-            config=config,
+            config=cfg,
             filters=all_filters,
             initial_category=initial_category,
             category_slugs=seo.canonical_slugs(registry.get_all()),
@@ -166,14 +224,18 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
             # JavaScript, so until now nothing on the site linked to a landing
             # page — they existed, and only the sitemap said so.
             category_index=sorted(
-                (seo.category_label(key), slug)
+                (seo.category_label(key, cfg.category_labels), slug)
                 for key, slug in seo.canonical_slugs(registry.get_all()).items()
             ),
-            page=page or _page(seo.home_meta(config), "/"),
+            page=page or _page(seo.home_meta(cfg), "/", lang),
+            lang=lang,
+            prefix=_prefix(lang),
+            languages=_switch(lang, path),
+            lang_cookie=lang_cookie,
         )
 
-    @app.route("/")
-    def index():
+    def index(lang=""):
+        lang = lang or base_lang
         # ?cat=<key> opens the game straight into a category (shareable link);
         # otherwise fall back to config.default_category so the home page lands
         # on a live card instead of an empty "pick a category" screen.
@@ -181,19 +243,25 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         initial = cat if registry.get(cat) else None
         if initial is None and registry.get(config.default_category or ""):
             initial = config.default_category
+        if not cat:
+            elsewhere = _preferred_elsewhere(lang, "/")
+            if elsewhere:
+                return elsewhere
         # `?cat=` is the same page as that category's own URL, so it points at
         # it rather than competing with it. A bare `/` is the home page and
         # canonicalises to itself, even when a default category is showing.
         page = None
+        path = "/"
         if cat and initial:
             slug = seo.canonical_slugs(registry.get_all()).get(initial)
             if slug:
-                page = _page(_category_page_meta(initial), f"/{slug}")
-        category = _category_content(initial) if page else None
-        return _render_index(initial, page, category)
+                path = f"/{slug}"
+                page = _page(_category_page_meta(initial, lang), path, lang)
+        category = _category_content(initial, lang) if page else None
+        return _render_index(initial, page, category, lang, path)
 
-    @app.route("/<slug>")
-    def category_landing(slug):
+    def category_landing(slug, lang=""):
+        lang = lang or base_lang
         # Pretty per-category landing pages, e.g. /food -> culture:food.
         key = seo.category_slugs(registry.get_all()).get(slug)
         if key is None:
@@ -202,19 +270,54 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         # /culture-food. Both keep working; the canonical names the short one
         # so the pair is never indexed as two pages.
         canonical = seo.canonical_slugs(registry.get_all()).get(key, slug)
+        elsewhere = _preferred_elsewhere(lang, f"/{canonical}")
+        if elsewhere:
+            return elsewhere
         return _render_index(
             key,
-            _page(_category_page_meta(key), f"/{canonical}"),
-            _category_content(key),
+            _page(_category_page_meta(key, lang), f"/{canonical}", lang),
+            _category_content(key, lang),
+            lang,
+            f"/{canonical}",
         )
 
-    @app.route("/about")
-    def about():
+    def about(lang=""):
+        lang = lang or base_lang
+        elsewhere = _preferred_elsewhere(lang, "/about")
+        if elsewhere:
+            return elsewhere
+        cfg = configs[lang]
         return render_template(
             "about.html",
             version=config.version,
-            config=config,
-            page=_page(seo.about_meta(config), "/about"),
+            config=cfg,
+            page=_page(seo.about_meta(cfg), "/about", lang),
+            lang=lang,
+            prefix=_prefix(lang),
+            languages=_switch(lang, "/about"),
+            lang_cookie=lang_cookie,
+        )
+
+    app.add_url_rule("/", "index", index)
+    app.add_url_rule("/<slug>", "category_landing", category_landing)
+    app.add_url_rule("/about", "about", about)
+    for code in configs:
+        if code == base_lang:
+            continue
+        # /en -> /en/, so the language's home has one address.
+        app.add_url_rule(
+            f"/{code}", f"index_{code}_bare",
+            lambda code=code: redirect(f"/{code}/"),
+        )
+        app.add_url_rule(
+            f"/{code}/", f"index_{code}", lambda code=code: index(code)
+        )
+        app.add_url_rule(
+            f"/{code}/about", f"about_{code}", lambda code=code: about(code)
+        )
+        app.add_url_rule(
+            f"/{code}/<slug>", f"category_landing_{code}",
+            lambda slug, code=code: category_landing(slug, code),
         )
 
     @app.route("/robots.txt")
@@ -242,10 +345,15 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
         provider appears here the moment it registers — nothing to maintain.
         """
         base = _site_url()
-        paths = ["/", "/about"]
-        paths += [
+        pages = ["/", "/about"]
+        pages += [
             f"/{slug}"
             for slug in sorted(seo.canonical_slugs(registry.get_all()).values())
+        ]
+        paths = [
+            (_prefix(code) + page) if page != "/" else (_prefix(code) + "/")
+            for code in configs
+            for page in pages
         ]
         urls = "".join(
             f"<url><loc>{escape(base + quote(path))}</loc></url>" for path in paths
@@ -259,6 +367,18 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
     @app.route("/api/random")
     def random_item():
+        # A game played in another of its languages: answers and tags in it,
+        # and the details panel from that Wikipedia edition.
+        lang = request.args.get("lang", "")
+        if lang not in configs:
+            lang = base_lang
+        token = images.use_details_lang(lang if lang != base_lang else None)
+        try:
+            return _random_item(lang)
+        finally:
+            images.reset_details_lang(token)
+
+    def _random_item(lang):
         cats = request.args.get("cats", "")
         cat_list = [c for c in cats.split(",") if registry.get(c)]
         if not cat_list:
@@ -306,9 +426,13 @@ def create_app(config: MemiConfig, instance_static: str | None = None) -> Flask:
 
             if provider.override_name:
                 result["name"] = item
+            if lang != base_lang:
+                result["name"] = provider.translate(result["name"], lang)
 
             # Tag
             tag = provider.get_tag(item)
+            if tag and lang != base_lang:
+                tag = provider.translate(tag, lang)
             if tag:
                 result["tag"] = tag
                 if provider.tag_style:

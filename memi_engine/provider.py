@@ -32,6 +32,11 @@ class CategoryProvider:
         map_bounds: Optional ``((lat_min, lat_max), (lon_min, lon_max))``.
             Coordinates outside it get no map: they belong to something other
             than what the card shows (a river's point is often its mouth).
+        translations: For a game played in more than one language (see
+            ``MemiConfig.languages``): ``{lang: {text: translation}}`` for the
+            card's answer and tag, e.g. ``{"en": {"Golfinho-roaz": "Bottlenose
+            dolphin", "rei": "king"}}``. Text with no entry shows as it is —
+            right for most people's names.
     """
 
     key: str = ""
@@ -45,6 +50,7 @@ class CategoryProvider:
     submenu_default: bool = False
     map_zoom: int | None = None
     map_bounds: tuple[tuple[float, float], tuple[float, float]] | None = None
+    translations: dict[str, dict[str, str]] = {}
 
     def __init__(self) -> None:
         # Copy the declarative class-level containers onto the instance so the
@@ -101,7 +107,7 @@ class CategoryProvider:
             return None
         lang, title = found
         # In the game's own language when that edition has the article.
-        want = images._DETAILS_LANG
+        want = images.details_lang()
         if want and want != lang:
             translated = images.wikipedia_langlink(title, lang, want)
             if translated:
@@ -136,6 +142,10 @@ class CategoryProvider:
             return True
         (lat_min, lat_max), (lon_min, lon_max) = self.map_bounds
         return lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
+
+    def translate(self, text: str, lang: str) -> str:
+        """``text`` (an answer or a tag) in ``lang``, from ``translations``."""
+        return self.translations.get(lang, {}).get(text, text)
 
     def get_audio(self, item: str) -> dict | None:
         """Return how to say the answer aloud, or None for no speaker button.
@@ -227,3 +237,10 @@ class AggregateProvider(CategoryProvider):
     def get_audio(self, item: str) -> dict | None:
         owner = self._owner(item)
         return owner.get_audio(item) if owner else None
+
+    def translate(self, text: str, lang: str) -> str:
+        for prov in self._members():
+            translated = prov.translate(text, lang)
+            if translated != text:
+                return translated
+        return text

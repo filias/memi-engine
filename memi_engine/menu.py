@@ -5,7 +5,7 @@ from __future__ import annotations
 from memi_engine.registry import get, get_categories
 
 
-def build_menu():
+def build_menu(labels: dict[str, str] | None = None):
     """Build a nested menu structure from registered categories.
 
     Supports up to 4 levels: parent:group:subgroup:label
@@ -13,6 +13,10 @@ def build_menu():
     Returns (top_level, subcategories) where:
     - top_level: sorted list of {"label": ..., "key": ... or "has_submenu": True}
     - subcategories: dict of parent -> list of children (recursively nested)
+
+    ``labels`` maps key segments to what the menu shows for them (a game in a
+    second language). Every entry keeps its segment as ``label`` — the JS looks
+    groups up by it — and adds ``text`` when the shown label differs.
     """
     categories = get_categories()
     top_level_keys = set()
@@ -48,8 +52,21 @@ def build_menu():
             top_level.append({"label": name, "key": name})
 
     _sort_children(subs)
+    if labels:
+        _apply_labels(top_level, labels)
+        for children in subs.values():
+            _apply_labels(children, labels)
 
     return top_level, subs
+
+
+def _apply_labels(items, labels):
+    for item in items:
+        text = labels.get(item["label"])
+        if text:
+            item["text"] = text
+        if "children" in item:
+            _apply_labels(item["children"], labels)
 
 
 def _find_or_create_group(items, label):

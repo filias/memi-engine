@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-20
+
+### Added
+- **A game can be played in more than one language.** `MemiConfig.languages`
+  lists the others (`{"en": {...fields that read differently...}}`). The
+  game's own language stays at `/`, each other one is served under `/<code>/`
+  (home, about and every category page), and the header shows a `pt | en`
+  switch linking each page to its counterpart. A visitor's choice is
+  remembered in a cookie, so the game's own pages send them on to theirs.
+  Pages carry `hreflang` alternates and the sitemap lists every language.
+- **`CategoryProvider.translations`** — `{lang: {text: translation}}` for a
+  card's answer and tag in another language. `/api/random?lang=<code>` applies
+  it, and writes the details panel from that language's Wikipedia.
+- **`MemiConfig.category_labels`** — what the menu and category pages show for
+  a key segment, so category keys can stay as they are while the menu reads
+  in the visitor's language.
+
+### Changed
+- The about page's theme label uses `label_theme` instead of a fixed "theme".
+
 ## [0.10.0] - 2026-10-15
 
 ### Added

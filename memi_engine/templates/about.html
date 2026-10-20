@@ -5,12 +5,17 @@
 </head>
 <body>
     <div class="theme-picker">
-        <span class="theme-label">theme</span>
+        <span class="theme-label">{{ config.label_theme }}</span>
         {% for theme in config.themes %}
         <div class="theme-dot" data-theme="{{ theme }}" title="{{ theme }}" onclick='setTheme({{ theme | tojson }})'></div>
         {% endfor %}
     </div>
-    <h1><a href="/">{{ config.title }}</a></h1>
+    {%- if languages %}
+    <div class="top-right">
+        {% include "languages.html" %}
+    </div>
+    {%- endif %}
+    <h1><a href="{{ prefix }}/">{{ config.title }}</a></h1>
 
     <div class="content">
         {% if config.about_html %}
@@ -29,7 +34,7 @@
         </ul>
         {% endif %}
 
-        <p><a href="/" class="back-link">&larr; {{ config.label_back }}</a></p>
+        <p><a href="{{ prefix }}/" class="back-link">&larr; {{ config.label_back }}</a></p>
     </div>
     <script>
     function setTheme(theme) {

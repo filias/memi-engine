@@ -7,6 +7,7 @@ resolve item names to image URLs.
 
 from __future__ import annotations
 
+import contextvars
 import os
 import re
 import time
@@ -31,6 +32,30 @@ _WIKIPEDIA_LANG = os.environ.get("MEMI_WIKIPEDIA_LANG", "en")
 # An article found in another edition is swapped for its counterpart here
 # when one exists. ``None`` keeps whatever edition the card links to.
 _DETAILS_LANG: str | None = None
+
+
+# The language of the request being served, when it isn't the game's own
+# (a game played in a second language, see MemiConfig.languages).
+_REQUEST_DETAILS_LANG: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "memi_details_lang", default=None
+)
+
+
+def details_lang() -> str | None:
+    """The language the details panel should be written in right now."""
+    return _REQUEST_DETAILS_LANG.get() or _DETAILS_LANG
+
+
+def use_details_lang(lang: str | None):
+    """Write the details panel in ``lang`` for the rest of this request.
+
+    Returns a token for :func:`reset_details_lang`.
+    """
+    return _REQUEST_DETAILS_LANG.set(lang.split("-")[0].lower() if lang else None)
+
+
+def reset_details_lang(token) -> None:
+    _REQUEST_DETAILS_LANG.reset(token)
 
 
 def set_details_lang(lang: str | None) -> None:

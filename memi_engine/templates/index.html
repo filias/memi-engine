@@ -14,7 +14,8 @@
         {% if config.sponsor_url %}
         <a href="{{ config.sponsor_url }}" target="_blank" rel="noopener" class="about-link sponsor-heart" title="{{ config.sponsor_text }}">&#9825; {{ config.sponsor_text }}</a>
         {% endif %}
-        <a href="/about" class="about-link">{{ config.label_about }}</a>
+        <a href="{{ prefix }}/about" class="about-link">{{ config.label_about }}</a>
+        {% include "languages.html" %}
     </div>
     <h1>{{ config.title }}</h1>
     <p class="subtitle">{{ config.subtitle }}</p>
@@ -22,9 +23,9 @@
     <div class="categories" id="main-categories">
         {% for item in top_level %}
         {% if item.has_submenu %}
-        <button onclick='toggleSubmenu({{ item.label | tojson }})'>{{ item.label }}</button>
+        <button onclick='toggleSubmenu({{ item.label | tojson }})'>{{ item.text or item.label }}</button>
         {% else %}
-        <button onclick='selectCategory({{ item.key | tojson }}); this.classList.add("active")'>{{ item.label }}</button>
+        <button onclick='selectCategory({{ item.key | tojson }}); this.classList.add("active")'>{{ item.text or item.label }}</button>
         {% endif %}
         {% endfor %}
     </div>
@@ -126,6 +127,10 @@
     var INITIAL_CATEGORY = {{ (initial_category or none) | tojson }};
     // Each category's shareable path (/<slug>); the address bar follows the game.
     var CATEGORY_SLUGS = {{ category_slugs | tojson }};
+    // The language being played when it isn't the game's own: its URLs live
+    // under PATH_PREFIX (/en) and the API answers in it.
+    var PATH_PREFIX = {{ (prefix or "") | tojson }};
+    var GAME_LANG = {{ (lang if prefix else "") | tojson }};
     </script>
     <script id="subcategories-data" type="application/json">{{ subcategories | tojson }}</script>
     <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
@@ -138,7 +143,7 @@
     {%- if category_index %}
     <nav class="category-index" aria-label="{{ config.label_pick_category }}">
         {%- for label, slug in category_index %}
-        <a href="/{{ slug }}">{{ label }}</a>
+        <a href="{{ prefix }}/{{ slug }}">{{ label }}</a>
         {%- endfor %}
     </nav>
     {%- endif %}

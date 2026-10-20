@@ -8,6 +8,10 @@
     <meta name="description" content="{{ page.description }}">
     {# /food and /culture-food are the same category; the canonical picks one. #}
     <link rel="canonical" href="{{ page.canonical }}">
+    {#- The same page in the game's other languages (MemiConfig.languages). #}
+    {%- for alt in page.alternates or [] %}
+    <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.href }}">
+    {%- endfor %}
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ config.title }}">
     <meta property="og:title" content="{{ page.title }}">

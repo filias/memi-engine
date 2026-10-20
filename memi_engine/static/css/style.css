@@ -526,6 +526,32 @@ h1 a {
     color: var(--accent);
 }
 
+/* The language switch (MemiConfig.languages): "pt | en" beside "about". */
+.lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.lang-switch a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+.lang-switch a:hover {
+    color: var(--accent);
+}
+
+.lang-current {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.lang-sep {
+    color: var(--muted);
+}
+
 .sponsor-heart {
     font-size: 0.9rem;
 }

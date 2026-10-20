@@ -1,0 +1,15 @@
+{#- The language switch (MemiConfig.languages): "pt | en", each linking to
+    this page in that language. Choosing one is remembered in a cookie, so the
+    game's own address (/) then sends that visitor to their language. -#}
+{%- if languages %}
+<nav class="lang-switch" aria-label="language">
+    {%- for l in languages %}
+    {%- if not loop.first %}<span class="lang-sep" aria-hidden="true">|</span>{% endif %}
+    {%- if l.active %}
+    <span class="lang-current" aria-current="true">{{ l.code }}</span>
+    {%- else %}
+    <a href="{{ l.href }}" hreflang="{{ l.code }}" lang="{{ l.code }}" onclick='document.cookie = {{ (lang_cookie ~ "=" ~ l.code ~ "; path=/; max-age=31536000; samesite=lax") | tojson }}'>{{ l.code }}</a>
+    {%- endif %}
+    {%- endfor %}
+</nav>
+{%- endif %}

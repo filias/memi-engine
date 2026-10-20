@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, replace
 
 LAYOUTS = ("classic", "enriched")
 
@@ -134,6 +134,44 @@ class MemiConfig:
     # on every page load, and a crawler has seen the point long before the
     # five-hundredth name.
     contents_max: int = 200
+
+    # --- Other languages ---
+    #
+    # Menu and page-heading labels for category key segments, e.g.
+    # {"cultura": "culture", "monumentos": "monuments"}. A segment with no
+    # entry shows as itself, as before.
+    category_labels: dict[str, str] = field(default_factory=dict)
+    # Other languages the game can also be played in, by code: each is a dict
+    # of the fields above to use in that language instead — the label_*
+    # fields, subtitle, about_html, description, category_intro,
+    # category_labels, done_html… For example:
+    #
+    #     languages={"en": {"subtitle": "practise your memory",
+    #                       "label_about": "about", ...}}
+    #
+    # The game's own language (html_lang) stays at /; each other one is served
+    # under /<code>/, and the header gets a switch between them. Card answers
+    # and tags are translated by each provider's ``translations``.
+    languages: dict[str, dict] = field(default_factory=dict)
+
+    @property
+    def lang(self) -> str:
+        """The bare language code of html_lang: "pt-PT" -> "pt"."""
+        return self.html_lang.split("-")[0].lower()
+
+    def for_language(self, code: str) -> MemiConfig:
+        """This config as it reads in ``code``: one of ``languages``, or itself."""
+        if code == self.lang or code not in self.languages:
+            return self
+        overrides = dict(self.languages[code])
+        known = {f.name for f in fields(self)}
+        unknown = set(overrides) - known
+        if unknown:
+            raise ValueError(
+                f"languages[{code!r}] sets unknown fields: {', '.join(sorted(unknown))}"
+            )
+        overrides.setdefault("html_lang", code)
+        return replace(self, **overrides)
 
     def __post_init__(self) -> None:
         if self.layout not in LAYOUTS:

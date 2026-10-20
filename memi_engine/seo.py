@@ -60,12 +60,14 @@ def shorten(text: str, limit: int = DESCRIPTION_MAX) -> str:
     return trimmed if trimmed.endswith((".", "!", "?")) else trimmed + "…"
 
 
-def category_label(key: str) -> str:
+def category_label(key: str, labels: dict[str, str] | None = None) -> str:
     """Display label for a category key — its last segment, as the menu shows it.
 
-    ``"cultura:monumentos"`` -> ``"monumentos"``.
+    ``"cultura:monumentos"`` -> ``"monumentos"``; with ``labels`` (a game in a
+    second language) the segment's translation, ``"monuments"``.
     """
-    return key.rsplit(":", 1)[-1]
+    segment = key.rsplit(":", 1)[-1]
+    return (labels or {}).get(segment, segment)
 
 
 # Letters NFKD doesn't decompose into an ASCII base + accent.
@@ -186,7 +188,7 @@ def category_intro(config, key: str, count: int) -> str:
         return ""
     return _format(
         config.category_intro,
-        category=category_label(key),
+        category=category_label(key, config.category_labels),
         title=config.title,
         subtitle=config.subtitle,
         count=str(count),
@@ -201,7 +203,7 @@ def category_meta(config, key: str, count: int = 0) -> dict[str, str]:
     monumentos portugueses to name").
     """
     values = {
-        "category": category_label(key),
+        "category": category_label(key, config.category_labels),
         "title": config.title,
         "subtitle": config.subtitle,
         "count": str(count),

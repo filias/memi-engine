@@ -207,6 +207,8 @@ Passed to `create_app`. Common fields:
 | `label_contents`  | `"what's in…"`       | Summary of a category page's collapsed item list. |
 | `contents_max`    | `200`                | Most item names that list will show.     |
 | `layout`          | `"classic"`          | `"enriched"` adds the details panel and a prominent *know more*. |
+| `category_labels` | `{}`                 | What the menu shows for key segments, e.g. `{"cultura": "culture"}`. |
+| `languages`       | `{}`                 | Other languages the game is also played in — see below. |
 
 For a non-English game, set `wikipedia_lang` so the default image lookup and the
 *"know more"* link resolve against that language's Wikipedia (e.g. `"pt"`). It
@@ -214,6 +216,45 @@ can also be set with the `MEMI_WIKIPEDIA_LANG` environment variable.
 
 All UI strings are `label_*` fields, so a fully localized game keeps its labels
 and `about_html` in its own language while the code stays English.
+
+### More than one language
+
+A game can be played in a second language too. List it in `languages`, with
+the fields that read differently in it:
+
+```python
+config = MemiConfig(
+    html_lang="pt",
+    subtitle="pratica a tua memória",
+    label_about="sobre",
+    # ...the game's own language, as usual...
+    languages={
+        "en": {
+            "subtitle": "practise your memory",
+            "label_about": "about",
+            "about_html": "<p>...</p>",
+            "category_labels": {"cultura": "culture", "monumentos": "monuments"},
+            # ...every label_* field, and anything else that's in Portuguese
+        },
+    },
+)
+```
+
+The game's own language stays at `/`; English is served under `/en/` (`/en/`,
+`/en/about`, `/en/<slug>` — slugs are shared), and the header gets a
+`pt | en` switch linking each page to its counterpart. The choice is remembered
+in a cookie: a visitor who picked English and opens `/monumentos` is sent to
+`/en/monumentos`. Pages carry `hreflang` alternates, and the sitemap lists every
+language.
+
+The cards follow: `/api/random?lang=en` writes the details panel from English
+Wikipedia, and each provider's `translations` turns its answers and tags into
+English — anything without an entry shows as it is:
+
+```python
+class Animals(CategoryProvider):
+    translations = {"en": {"Golfinho-roaz": "Bottlenose dolphin", "rei": "king"}}
+```
 
 ### Instance static files
 

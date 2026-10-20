@@ -46,7 +46,7 @@ function renderSubmenu(items, group) {
     const leafKeys = [];
     for (const sub of items) {
         const btn = document.createElement('button');
-        btn.textContent = sub.label;
+        btn.textContent = sub.text || sub.label;
         if (sub.children) {
             btn.onclick = function() {
                 menuStack.push({items, group: currentGroup});
@@ -175,7 +175,8 @@ function closeSubmenu() {
 function syncUrl() {
     if (typeof CATEGORY_SLUGS === 'undefined' || !window.history.replaceState) return;
     const slug = selectedCategories.length === 1 ? CATEGORY_SLUGS[selectedCategories[0]] : null;
-    const path = slug ? '/' + encodeURIComponent(slug) : '/';
+    const prefix = typeof PATH_PREFIX === 'string' ? PATH_PREFIX : '';
+    const path = prefix + (slug ? '/' + encodeURIComponent(slug) : '/');
     if (window.location.pathname !== path || window.location.search) {
         window.history.replaceState(null, '', path);
     }
@@ -209,6 +210,9 @@ function toggleFilter(filterName, value, btn) {
 function buildFetchUrl() {
     const cats = selectedCategories.join(',');
     let url = `/api/random?cats=${encodeURIComponent(cats)}`;
+    if (typeof GAME_LANG === 'string' && GAME_LANG) {
+        url += `&lang=${encodeURIComponent(GAME_LANG)}`;
+    }
     if (seenItems.length > 0) {
         url += `&seen=${encodeURIComponent(seenItems.join(','))}`;
     }
